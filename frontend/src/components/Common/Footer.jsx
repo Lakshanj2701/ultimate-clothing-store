@@ -14,7 +14,8 @@ const Footer = () => {
           </p>
           {/*Newsletter form */}
           <form className="flex">
-            <input type="email" placeholder="Enter your Email" className="p-3 w-full text-sm border-t border"/>
+            <input type="email" placeholder="Enter your Email" className="p-3 w-full text-sm border-t border border-b border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all" required/>
+            <button type ="submit" className="bg-black text-white px-6 py-3 text-sm rounded-r-md hover:bg-gray-800 transition all">Subscribe</button>
           </form>
         </div>
       </div>
