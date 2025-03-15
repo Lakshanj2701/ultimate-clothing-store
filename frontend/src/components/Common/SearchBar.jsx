@@ -9,13 +9,21 @@ const SearchBar = () => {
     setIsOpen(!isOpen);
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log("Search Term:", searchTerm); 
+    setIsOpen(false); 
+};
+
  
 
   return (
     <div className={`flex items-center justify-center transition-all duration-300 ${isOpen ? 
     "absolute top-0 left-0 w-full bg-white h-24 z-50" : "w-auto"}`}>
       {isOpen ? (
-        <form className="relative flex items-center justify-center w-full">
+        <form onSubmit={handleSearch} 
+        className="relative flex items-center justify-center w-full"
+        >
           <div className="relative w-1/2">
             <input type="text" 
                    placeholder="Search"
