@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import AdminLayout from './components/Admin/AdminLayout';
 import AdminHomePage from './pages/AdminHomePage';
 import UserManagement from './components/Admin/UserManagement';
+import ProductManagement from './components/Admin/ProductManagement';
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
         <Route path="/admin" element={< AdminLayout/>}>
           <Route index element={<AdminHomePage/>}/>
           <Route path="users" element={<UserManagement/>}/>
+          <Route path="products" element={<ProductManagement/>}/>
         </Route>
 
       </Routes>
