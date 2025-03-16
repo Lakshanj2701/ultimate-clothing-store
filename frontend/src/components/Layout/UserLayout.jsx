@@ -7,13 +7,13 @@ const UserLayout = () => {
   return (
     <>
       {/* Header */}
-      <Header  />
+      <Header />
       {/* Main content */}
       <main>
-        <Outlet/>
+        <Outlet />
       </main>
       {/* Footer */}
-      <Footer/>
+      <Footer />
     </>
   );
 };
