@@ -9,7 +9,9 @@ app.use(cors());
 
 dotenv.config();
 
-const PORT = 9000;
+console.log(process.env.PORT)
+
+const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
   res.send("WELCOME TO RABBIT API!");
