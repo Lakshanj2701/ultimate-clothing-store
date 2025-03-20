@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const connectDB = require("./config/db");
 
 const app = express(); 
 
@@ -12,6 +13,9 @@ dotenv.config();
 console.log(process.env.PORT)
 
 const PORT = process.env.PORT || 3000;
+
+//connect to the database
+connectDB();
 
 app.get("/", (req, res) => {
   res.send("WELCOME TO RABBIT API!");
