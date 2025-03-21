@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PayPalButton from "./PayPalButton";
+import BankDepositForm from './BankDepositForm';
 
 const cart = {
   products: [
@@ -25,6 +26,7 @@ const cart = {
 const Checkout = () => {
   const navigate = useNavigate();
   const [checkoutId, setCheckoutId] = useState(null);
+  const [showBankDeposit, setShowBankDeposit] = useState(false);  // Added state to control visibility of Bank Deposit form
   const [shippingAddress, setShippingAddress] = useState({
     firstName: "",
     lastName: "",
@@ -36,14 +38,18 @@ const Checkout = () => {
   });
 
   const handleCreateCheckout = (e) => {
-    e.preventDefault(); 
-    setCheckoutId(123); 
+    e.preventDefault();
+    setCheckoutId(123);
   };
+
   const handlePaymentSuccess = (details) => {
     console.log("Payment Successful", details);
     navigate("/order-confirmation");
   };
-  
+
+  const handleShowBankDeposit = () => {
+    setShowBankDeposit(true);  // Show Bank Deposit Form when user clicks on the button
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto py-10 px-6 tracking-tighter">
@@ -183,32 +189,47 @@ const Checkout = () => {
                 Continue Payment
               </button>
             ) : (
-            <div className="">
-               <h3 className="text-lg mb-4">Pay with PayPal</h3>
+              <div>
+                <h3 className="text-lg mb-4 font-bold">Pay with PayPal</h3>
                 <PayPalButton
                   amount={100}
                   onSuccess={handlePaymentSuccess}
                   onError={(err) => alert("Payment failed. Try again.")}
                 />
-            </div>
-
+              </div>
             )}
           </div>
+
+          {/* Bank Deposit Button - Shows the Bank Deposit form when clicked */}
+          {checkoutId && !showBankDeposit && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleShowBankDeposit}
+                className="w-full bg-blue-500 text-white py-3 rounded"
+              >
+                Bank Deposit
+              </button>
+            </div>
+          )}
+
+          {/* Show Bank Deposit Form */}
+          {showBankDeposit && <BankDepositForm />}
         </form>
       </div>
+
       {/* Right Section */}
       <div className="bg-gray-50 p-6 rounded-lg">
         <h3 className="text-lg mb-4">Order Summary</h3>
         <div className="border-t py-4 mb-4">
           {cart.products.map((product, index) => (
-            <div 
-              key={index} 
-              className="flex items-start justify-between py-2 border-b">
+            <div key={index} className="flex items-start justify-between py-2 border-b">
               <div className="flex items-start">
-                <img 
-                  src={product.image} 
-                  alt={product.name} 
-                  className="w-20 h-24 object-cover mr-4"/>
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-20 h-24 object-cover mr-4"
+                />
                 <div>
                   <h3 className="text-md">{product.name}</h3>
                   <p className="text-gray-500">Size: {product.size}</p>
