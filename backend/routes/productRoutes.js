@@ -244,5 +244,88 @@ router.put("/:id", protect, admin, async (req, res) => {
   });
 
 
+  // @route GET /api/products/best-seller
+  // @desc Retrieve the product with the highest rating
+  // @access Public
+  router.get("/best-seller", async (req, res) => {
+    try {
+      const bestseller = await Product.findOne().sort({ rating: -1 });
+  
+      if (bestseller) {
+        res.json(bestseller);
+      } else {
+        res.status(404).json({ message: "No best seller found" });
+      }
+    } catch (error) {
+      console.error("Error fetching best seller:", error);
+      res.status(500).json({ message: "Server error" });  
+    }
+  });
+  
+ 
+  // @route GET /api/products/new-arrivals
+  // @desc Retrieve latest 8 products - Sorted by creation date
+  // @access Public
+  router.get("/new-arrivals", async (req, res) => {
+    try {
+      // Fetch latest 8 products
+      const newArrivals = await Product.find().sort({ createdAt: -1 }).limit(8);
+
+      res.json(newArrivals);
+    } catch (error) {
+      console.error("Error fetching new arrivals:", error); 
+      res.status(500).json({ message: "Server Error" });
+    }
+  });
+
+
+
+
+  // @route GET /api/products/:id
+  // @desc Get a single product by ID
+  // @access Public
+  router.get("/:id", async (req, res) => {
+    try {
+      const product = await Product.findById(req.params.id);
+
+      if (product) {
+        res.json(product);
+      } else {
+        res.status(404).json({ message: "Product Not Found" });
+      }
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      res.status(500).json({ message: "Server Error" });
+    }
+  });
+
+
+  // @route GET /api/products/similar/:id
+  // @desc Retrieve similar products based on the current product's gender and category
+  // @access Public
+  router.get("/similar/:id", async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+      const product = await Product.findById(id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+  
+      const similarProducts = await Product.find({
+        _id: { $ne: id }, // Exclude the current product ID
+        gender: product.gender,
+        category: product.category,
+      }).limit(10); // Corrected `.limit()`
+  
+      res.json(similarProducts);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+      
+  
+
 
 module.exports = router;
