@@ -131,7 +131,118 @@ router.put("/:id", protect, admin, async (req, res) => {
       res.status(500).json({ message: "Server error" });
     }
   });
-  
+
+  // @route DELETE /api/products/:id
+  // @desc Delete a product by ID
+  // @access Private/Admin
+  router.delete("/:id", protect, admin, async (req, res) => {
+    try {
+      // Find the product by ID
+      const product = await Product.findById(req.params.id);
+
+      if (product) {
+        // Remove the product from the database
+        await product.deleteOne();
+        res.json({ message: "Product removed" });
+      } else {
+        res.status(404).json({ message: "Product not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(500).send("Server Error");
+    }
+  });
+
+
+  // @route GET /api/products
+  // @desc Get all products with optional query filters
+  // @access Public
+  router.get("/", async (req, res) => {
+    try {
+      const {
+        collection,
+        size,
+        color,
+        gender,
+        minPrice,
+        maxPrice,
+        sortBy,
+        search,
+        category,
+        material,
+        brand,
+        limit,
+      } = req.query;
+
+      let query = {};
+      let sort = {};
+
+      // Filter logic
+      if (collection && collection.toLowerCase() !== "all") {
+        query.collections = collection;
+      }
+      if (category && category.toLowerCase() !== "all") {
+        query.category = category;
+      }
+      if (material) {
+        query.material = { $in: material.split(",") };
+      }
+      if (brand) {
+        query.brand = { $in: brand.split(",") };
+      }
+      if (size) {
+        query.sizes = { $in: size.split(",") };
+      }
+      if (color) {
+        query.colors = { $in: [color] };
+      }
+      if (gender) {
+        query.gender = gender;
+      }
+
+      // Price filtering
+      if (minPrice || maxPrice) {
+        query.price = {};
+        if (minPrice) query.price.$gte = Number(minPrice);
+        if (maxPrice) query.price.$lte = Number(maxPrice);
+      }
+
+      // Search functionality
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      // Sorting logic
+      
+      if (sortBy) {
+        switch (sortBy) {
+          case "priceAsc":
+            sort = { price: 1 };
+            break;
+          case "priceDesc":
+            sort = { price: -1 };
+            break;
+          case "popularity":
+            sort = { rating: -1 };
+            break;
+          default:
+            break;
+        }
+      }
+
+      // Fetch products and apply sorting and limit
+      const products = await Product.find(query).sort(sort).limit(Number(limit) || 0);
+
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
 
 
 module.exports = router;
