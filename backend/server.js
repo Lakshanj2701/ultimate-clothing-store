@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 app.get("/", (req, res) => {
-  res.send("WELCOME TO RABBIT API!");
+  res.send("WELCOME TO ULTIMATE CLOTHING API!");
 });
 
 app.listen(PORT, () => {
