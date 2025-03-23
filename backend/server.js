@@ -5,6 +5,10 @@ const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 
+const uploadRoutes = require("./routes/uploadRoutes");
+const subscribeRoute = require("./routes/subscribeRoute");
+
+
 
 const app = express(); 
 
@@ -28,6 +32,9 @@ app.get("/", (req, res) => {
 //API Routes
 app.use("/api/users",userRoutes);
 app.use("/api/products",productRoutes);
+
+app.use("/api/upload",uploadRoutes);
+app.use("/api",subscribeRoute);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`); 
