@@ -22,7 +22,7 @@ router.post("/subscribe", async (req, res) => {
 
     // Create a new subscriber
     const newSubscriber = new Subscriber({ email });
-    await newSubscriber.save(); // ✅ Corrected mistake
+    await newSubscriber.save(); 
 
     res.status(201).json({ message: "Successfully subscribed to the newsletter!" });
 
