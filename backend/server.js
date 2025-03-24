@@ -9,7 +9,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const subscribeRoute = require("./routes/subscribeRoute");
 const adminRoutes = require("./routes/adminRoutes");
 const productAdminRoutes = require("./routes/productAdminRoutes");
-
+const adminOrderRoutes = require("./routes/adminOrderRoutes");
 
 const app = express(); 
 
@@ -40,7 +40,7 @@ app.use("/api",subscribeRoute);
 //admin
 app.use("/api/admin/users", adminRoutes);
 app.use("/api/admin/products", productAdminRoutes);
-
+app.use("/api/admin/orders", adminOrderRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`); 
