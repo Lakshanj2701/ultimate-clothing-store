@@ -2,6 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
+const userRoutes = require("./routes/userRoutes");
+const productRoutes = require("./routes/productRoutes");
+
+const uploadRoutes = require("./routes/uploadRoutes");
+const subscribeRoute = require("./routes/subscribeRoute");
+const adminRoutes = require("./routes/adminRoutes");
+const productAdminRoutes = require("./routes/productAdminRoutes");
+
 
 const app = express(); 
 
@@ -20,6 +28,19 @@ connectDB();
 app.get("/", (req, res) => {
   res.send("WELCOME TO RABBIT API!");
 });
+
+
+//API Routes
+app.use("/api/users",userRoutes);
+app.use("/api/products",productRoutes);
+
+app.use("/api/upload",uploadRoutes);
+app.use("/api",subscribeRoute);
+
+//admin
+app.use("/api/admin/users", adminRoutes);
+app.use("/api/admin/products", productAdminRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`); 
