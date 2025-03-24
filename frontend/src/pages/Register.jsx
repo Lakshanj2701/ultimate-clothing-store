@@ -1,16 +1,50 @@
 import React, { useState } from 'react';
-import { Link } from "react-router-dom";
 import register from "../assets/register.webp";
+import axios from 'axios';
+import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
     const [name, setName] = useState("")
     const [email, setEmail] = useState("");
     const [password, setPassword] =useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+    
+    const navigate = useNavigate();
 
-const handleSubmit = (e) => {
+const handleSubmit = async(e) => {
     e.preventDefault();
     console.log("User Registered:", {name, email, password })
+    
+    try {
+        console.log("hirrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+        const response = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/users/register`, 
+            { name, email, password }
+        );
+        
+      
+        if(response.status === 201){
+            console.log(response)
+            navigate('/login');
+            alert("success")
+        }
+     
+       
+        
+    } catch (error) {
+        setError(
+            error.response?.data?.message || 
+            "Login failed. Please check your credentials."
+       
+        );
+        alert("User already exists")
+    } finally {
+        setIsLoading(false);
+    }
+
 }
+
 
   return (
     <div className="flex">
@@ -44,7 +78,7 @@ const handleSubmit = (e) => {
                     />
                 </div>
                 <button type="submit" className="w-full bg-black text-white p-2 rounded-lg font-semibold hover:bg-gray-800 transition">
-                    Sign Up
+                   {isLoading ? 'Wait...' : 'Sign Up'}
                 </button>
                 <p className="mt-6 text-center text-sm">
                     Already have an account?{" "}
