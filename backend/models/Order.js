@@ -73,6 +73,11 @@ const orderSchema = new mongoose.Schema({
         type: String,
         enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
         default: "Processing",
+        required: true,
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
     },
 }, 
 { timestamps: true }

@@ -17,8 +17,6 @@ router.get("/", protect, admin, async (req, res) => {
   }
 });
 
-
-
 // @route   PUT /api/admin/orders/:id
 // @desc    Update order status
 // @access  Private/Admin
@@ -43,6 +41,37 @@ router.put("/:id", protect, admin, async (req, res) => {
   }
 });
 
+// @route   PUT /api/admin/orders/:id/status
+// @desc    Update order status (Admin only)
+// @access  Private/Admin
+router.put('/:id/status', protect, admin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        order.status = status;
+        order.updatedAt = Date.now();
+
+        if (status === 'Delivered') {
+            order.isDelivered = true;
+            order.deliveredAt = Date.now();
+        }
+
+        const updatedOrder = await order.save();
+
+        res.json({
+            success: true,
+            order: updatedOrder
+        });
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        res.status(500).json({ message: 'Error updating order status' });
+    }
+});
 
 // @route   DELETE /api/admin/orders/:id
 // @desc    Delete an order
@@ -63,6 +92,4 @@ router.delete("/:id", protect, admin, async (req, res) => {
   }
 });
 
-
-module.exports = router;    
- 
+module.exports = router;
