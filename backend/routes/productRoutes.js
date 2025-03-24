@@ -125,9 +125,7 @@ router.put("/:id", protect, admin, async (req, res) => {
     } catch(error){
         console.error(error);
         res.status(500).send("Server Error");
-
     }
-
-})
+});
 
 module.exports = router;
