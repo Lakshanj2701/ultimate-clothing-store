@@ -58,6 +58,6 @@ router.post("/", protect, async (requestAnimationFrame, res) => {
         res.status(201).json(createdProduct);
     }catch(error){
         console.error(error);
-        res.status(500).send("");
+        res.status(500).send("Server Error");
     }
-})
+});
