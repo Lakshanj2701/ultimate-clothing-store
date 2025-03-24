@@ -55,6 +55,7 @@ router.post("/register", async (req, res) => {
 // @access Public
 router.post("/login", async (req, res) => {
     const { email, password } = req.body;
+    console.log('hittttttttttttttttttttttttttttttttttttttttttt' , email)
     try {
       // Find the user by email
       let user = await User.findOne({ email });
