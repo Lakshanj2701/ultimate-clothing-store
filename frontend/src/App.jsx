@@ -27,16 +27,16 @@ const App = () => {
       <Routes>
         {/* User Routes */}
         <Route path="/" element={<UserLayout/>}> 
-         <Route index element={<Home />} />
-         <Route path="login" element={<Login/>}/>
-         <Route path="register" element={<Register/>}/>
-         <Route path="profile" element={<Profile/>}/>
-         <Route path="collections/:collection" element={<CollectionPage/>}/>
-         <Route path="product/:id" element={<ProductDetails />} />
-         <Route path="checkout" element={<Checkout />} />
-         <Route path="order-confirmation" element={<OrderConfirmationPage />} />
-         <Route path="order/:id" element={<OrderDetailsPage />} />
-         <Route path="my-orders" element={<MyOrdersPage/>} />
+          <Route index element={<Home />} />
+          <Route path="login" element={<Login/>}/>
+          <Route path="register" element={<Register/>}/>
+          <Route path="profile" element={<Profile/>}/>
+          <Route path="collections/:collection" element={<CollectionPage/>}/>
+          <Route path="product/:id" element={<ProductDetails />} />
+          <Route path="checkout" element={<Checkout />} />
+          <Route path="order-confirmation" element={<OrderConfirmationPage />} />
+          <Route path="order/:id" element={<OrderDetailsPage />} />
+          <Route path="my-orders" element={<MyOrdersPage/>} />
         </Route>
 
         {/* Admin Routes - Protected */}
