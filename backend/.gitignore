@@ -1,0 +1,38 @@
+# Node modules
+/node_modules/
+
+# Logs
+logs
+*.log
+*.log.*
+
+# Environment variables
+.env
+.env.*
+
+# Dependency directories
+jspm_packages/
+
+# Build output
+/dist
+/build
+
+# Test coverage
+coverage/
+
+# npm package lock
+/package-lock.json
+/yarn.lock
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated files
+*.tgz
