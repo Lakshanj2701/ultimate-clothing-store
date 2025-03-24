@@ -61,3 +61,5 @@ router.post("/", protect, async (requestAnimationFrame, res) => {
         res.status(500).send("Server Error");
     }
 });
+// @route PUT /api/products/:id
+// @desc Update an existing product ID
