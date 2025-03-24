@@ -10,8 +10,15 @@ const orderRoutes = require("./routes/orderRoutes");
 
 const app = express(); 
 
+// Configure CORS with specific options
+app.use(cors({
+  origin: "http://localhost:5173", // Your frontend URL
+  credentials: true, // Allow cookies and authentication headers
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
-app.use(cors());
 
 dotenv.config();
 
@@ -37,4 +44,5 @@ app.use("/api/orders", orderRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`); 
+  console.log(`Frontend can access from http://localhost:5173/`);
 });
