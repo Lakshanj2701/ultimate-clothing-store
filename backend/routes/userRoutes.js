@@ -11,6 +11,7 @@ const router = express.Router();
 // @access Public
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
+  console.log(name, email, password);
   
   try {
     // Registration logic
