@@ -117,6 +117,7 @@ router.put("/:id", protect, admin, async (req, res) => {
         product.sku = sku || product.sku;
         
         //Save the Update product
+
         const updatedProduct = await product.save();
         res.json(updatedProduct);
       } else{
