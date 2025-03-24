@@ -59,6 +59,5 @@ router.post("/", protect, async (requestAnimationFrame, res) => {
     }catch(error){
         console.error(error);
         res.status(500).send("");
-
     }
 })
