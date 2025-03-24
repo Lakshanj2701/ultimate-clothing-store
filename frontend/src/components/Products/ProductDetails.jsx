@@ -48,7 +48,6 @@ const similarProducts = [
         price: 100,
         images: [{url: "https://picsum.photos/500/500?random=5"}],
     },
-
 ];
 
 const ProductDetails = () => {
@@ -242,7 +241,6 @@ const handleAddToCart = () => {
                     You May Also Like
                 </h2>
                 <ProductGrid products={similarProducts} />
-
             </div>
         </div>
   </div>
