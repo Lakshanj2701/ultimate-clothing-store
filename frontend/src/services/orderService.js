@@ -36,6 +36,27 @@ export const orderService = {
         }
     },
 
+    // Update order details
+    updateOrderDetails: async (orderId, updateData) => {
+        try {
+            const response = await axios.put(
+                `${API_URL}/admin/orders/${orderId}/details`,
+                updateData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || 'Failed to update order details';
+            console.error('Update order details error:', error);
+            throw new Error(errorMessage);
+        }
+    },
+
     // Delete order
     deleteOrder: async (orderId) => {
         try {
