@@ -21,7 +21,7 @@ export const orderService = {
     updateOrderStatus: async (orderId, status) => {
         try {
             const response = await axios.put(
-                `${API_URL}/admin/orders/${orderId}`,
+                `${API_URL}/admin/orders/${orderId}`,  // Removed /status
                 { status },
                 {
                     headers: {
@@ -32,35 +32,8 @@ export const orderService = {
             );
             return response.data;
         } catch (error) {
+            console.error('Error updating order:', error.response?.data);
             throw error.response?.data?.message || 'Failed to update order status';
-        }
-    },
-
-    // Delete order
-    deleteOrder: async (orderId) => {
-        try {
-            const response = await axios.delete(`${API_URL}/admin/orders/${orderId}`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            return response.data;
-        } catch (error) {
-            throw error.response?.data?.message || 'Failed to delete order';
-        }
-    },
-
-    // Get single order details
-    getOrderDetails: async (orderId) => {
-        try {
-            const response = await axios.get(`${API_URL}/admin/orders/${orderId}`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            return response.data;
-        } catch (error) {
-            throw error.response?.data?.message || 'Failed to fetch order details';
         }
     }
 };
