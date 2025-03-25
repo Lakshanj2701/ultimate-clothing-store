@@ -1,31 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { userService } from '../../services/userService';
-import { toast } from 'sonner';
+import React, { useState } from 'react';
 
 const UserManagement = () => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const users = [
+        {
+            _id: 123213,
+            name: "John Doe",
+            email: "john@example.com",
+            role: "admin",
+        },
+    ];
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",
-        role: "customer",
+        role: "customer", // Default role
     });
-
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
-        try {
-            const data = await userService.getAllUsers();
-            setUsers(data);
-        } catch (error) {
-            toast.error(error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleChange = (e) => {
         setFormData({
@@ -34,49 +24,30 @@ const UserManagement = () => {
         });
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        try {
-            await userService.addUser(formData);
-            toast.success('User added successfully');
-            fetchUsers();
-            // Reset form
-            setFormData({
-                name: "",
-                email: "",
-                password: "",
-                role: "customer",
-            });
-        } catch (error) {
-            toast.error(error.message);
-        }
+        console.log(formData);
+        // Reset the form after submission
+        setFormData({
+            name: "",
+            email: "",
+            password: "",
+            role: "customer",
+        });
     };
 
-    const handleRoleChange = async (userId, newRole) => {
-        try {
-            await userService.updateUserRole(userId, newRole);
-            toast.success('User role updated successfully');
-            fetchUsers();
-        } catch (error) {
-            toast.error(error.message);
-        }
+    const handleRoleChange = (userId, newRole) => {
+        console.log({ id: userId, role: newRole });
     };
 
-    const handleDeleteUser = async (userId) => {
+
+    const handleDeleteUser = (userId) => {
         if (window.confirm("Are you sure you want to delete this user?")) {
-            try {
-                await userService.deleteUser(userId);
-                toast.success('User deleted successfully');
-                fetchUsers();
-            } catch (error) {
-                toast.error(error.message);
-            }
+          console.log("Deleting user with ID:", userId);
+          // Add delete logic here (e.g., API call or update state)
         }
-    };
-
-    if (loading) {
-        return <div className="flex justify-center items-center h-screen">Loading...</div>;
-    }
+      };
+      
 
     return (
         <div className="max-w-7xl mx-auto p-6">
