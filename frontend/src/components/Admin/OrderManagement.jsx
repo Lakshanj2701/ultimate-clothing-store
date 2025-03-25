@@ -49,7 +49,7 @@ const OrderManagement = () => {
         setSelectedOrder(order);
         setEditedOrder({
             totalPrice: order.totalPrice,
-            customerName: order.user?.name || ''
+            customerName: order.user?.name || ''  // Directly store the name
         });
         setIsModalOpen(true);
         setEditMode(false);
@@ -65,7 +65,7 @@ const OrderManagement = () => {
 
             const updateData = {
                 totalPrice: Number(editedOrder.totalPrice),
-                customerName: editedOrder.user?.name
+                customerName: editedOrder.customerName  // Changed from editedOrder.user?.name
             };
 
             const response = await orderService.updateOrderDetails(selectedOrder._id, updateData);
@@ -79,6 +79,7 @@ const OrderManagement = () => {
 
             setSelectedOrder(response);
             setEditMode(false);
+            setIsModalOpen(false); // Close modal after successful update
             
             // Show success message
             alert('Order updated successfully');
