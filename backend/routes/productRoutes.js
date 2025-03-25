@@ -157,11 +157,9 @@ router.put("/:id", protect, admin, async (req, res) => {
   // @access Private/Admin
   router.delete("/:id", protect, admin, async (req, res) => {
     try {
-      // Find the product by ID
       const product = await Product.findById(req.params.id);
 
       if (product) {
-        // Remove the product from the database
         await product.deleteOne();
         res.json({ message: "Product removed" });
       } else {

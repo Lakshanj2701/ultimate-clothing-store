@@ -22,9 +22,20 @@ const ProductManagement = () => {
     fetchProducts();
   }, []);
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete the Product?")) {
-      console.log("Delete Product with id:", id);
+      try {
+        await axios.delete(`http://localhost:9000/api/products/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+          },
+        });
+        setProducts(products.filter((product) => product._id !== id)); // Update state after deletion
+        alert("Product deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Failed to delete product.");
+      }
     }
   };
 
