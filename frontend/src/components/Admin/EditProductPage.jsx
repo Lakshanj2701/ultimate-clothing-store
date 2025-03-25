@@ -155,65 +155,65 @@ const EditProductPage = () => {
           />
         </div>
 
-        {/* Count In Stock */}
         <div className="mb-6">
-          <label className="block font-semibold mb-2">Count in Stock</label>
-          <input
-            type="number"
-            name="countInStock"
-            value={productData.countInStock}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
+                    <label className="block font-semibold mb-2">SKU</label>
+                    <input
+                        type="text"
+                        name="sku"
+                        value={productData.sku}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
 
-        {/* SKU */}
-        <div className="mb-6">
-          <label className="block font-semibold mb-2">SKU</label>
-          <input
-            type="text"
-            name="sku"
-            value={productData.sku}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
 
-        {/* Sizes */}
         <div className="mb-6">
-          <label className="block font-semibold mb-2">Sizes</label>
-          <input
-            type="text"
-            name="sizes"
-            value={productData.sizes.join(",")}
-            onChange={(e) =>
-              setProductData({
-                ...productData,
-                sizes: e.target.value.split(",").map((size) => size.trim()),
-              })
-            }
-            placeholder="e.g., S, M, L, XL"
-            className="w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
+                    <label className="block font-semibold mb-2">Category</label>
+                    <input
+                        type="text"
+                        name="category"
+                        value={productData.category}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
 
-        {/* Colors */}
-        <div className="mb-6">
-          <label className="block font-semibold mb-2">Colors</label>
-          <input
-            type="text"
-            name="colors"
-            value={productData.colors.join(",")}
-            onChange={(e) =>
-              setProductData({
-                ...productData,
-                colors: e.target.value.split(",").map((color) => color.trim()),
-              })
-            }
-            placeholder="e.g., Red, Blue, Green"
-            className="w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
+                <div className="mb-6">
+                    <label className="block font-semibold mb-2">Brand</label>
+                    <input
+                        type="text"
+                        name="brand"
+                        value={productData.brand}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
+                <div className="mb-6">
+                    <label className="block font-semibold mb-2">Material</label>
+                    <input
+                        type="text"
+                        name="material"
+                        value={productData.material}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
+
+                <div className="mb-6">
+                    <label className="block font-semibold mb-2">Gender</label>
+                    <input
+                        type="text"
+                        name="gender"
+                        value={productData.gender}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
 
         {/* Image upload */}
         <div className="mb-6">
