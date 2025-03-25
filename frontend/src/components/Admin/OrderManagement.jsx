@@ -9,7 +9,7 @@ const OrderManagement = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [selectedOrder,   setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
@@ -25,6 +25,7 @@ const OrderManagement = () => {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
             });
+            console.log(response.data);
             setOrders(response.data);
             setLoading(false);
         } catch (err) {
@@ -80,7 +81,7 @@ const OrderManagement = () => {
     const filteredOrders = orders.filter(order => {
         const matchesSearch = (
             order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.user?.name.toLowerCase().includes(searchTerm.toLowerCase())
+            order.shippingAddress?.address.toLowerCase().includes(searchTerm.toLowerCase())
         );
         const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
         return matchesSearch && matchesStatus;
@@ -235,7 +236,7 @@ const OrderManagement = () => {
                                         #{order._id}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {order.user?.name}
+                                        {order.customerName}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         ${order.totalPrice}
