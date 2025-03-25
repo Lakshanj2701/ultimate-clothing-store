@@ -181,6 +181,56 @@ const AddProductPage = () => {
                 </div>
 
                 <div className="mb-6">
+                    <label className="block font-semibold mb-2">Category</label>
+                    <input
+                        type="text"
+                        name="category"
+                        value={productData.category}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
+
+                <div className="mb-6">
+                    <label className="block font-semibold mb-2">Brand</label>
+                    <input
+                        type="text"
+                        name="brand"
+                        value={productData.brand}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
+
+                <div className="mb-6">
+                    <label className="block font-semibold mb-2">Material</label>
+                    <input
+                        type="text"
+                        name="material"
+                        value={productData.material}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
+
+                <div className="mb-6">
+                    <label className="block font-semibold mb-2">Gender</label>
+                    <input
+                        type="text"
+                        name="gender"
+                        value={productData.gender}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md p-2"
+                        required
+                    />
+                </div>
+
+
+
+                <div className="mb-6">
                     <label className="block font-semibold mb-2">Upload Images</label>
                     <label className="cursor-pointer inline-block px-4 py-2 bg-blue-600 text-white rounded-md shadow-md hover:bg-blue-700 transition duration-200">
                         Choose Files
