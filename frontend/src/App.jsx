@@ -20,6 +20,7 @@ import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
+import AddProductPage from './components/Admin/AddProductPage';
 
 const App = () => {
   return (
@@ -49,6 +50,7 @@ const App = () => {
             <Route path="products/:id/edit" element={<EditProductPage/>}/>
             <Route path="orders" element={<OrderManagement/>}/>
             <Route path="finance" element={<FinancialManagement/>}/>
+            <Route path="/admin/products/new" element={<AddProductPage />} />
           </Route>
         </Route>
       </Routes>
