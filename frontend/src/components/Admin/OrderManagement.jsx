@@ -5,6 +5,8 @@ const OrderManagement = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         fetchOrders();
@@ -24,11 +26,26 @@ const OrderManagement = () => {
     const handleStatusChange = async (orderId, status) => {
         try {
             await orderService.updateOrderStatus(orderId, status);
-            // Refresh orders after successful update
             fetchOrders();
         } catch (err) {
             setError(err.message);
         }
+    };
+
+    const handleDeleteOrder = async (orderId) => {
+        if (window.confirm('Are you sure you want to delete this order?')) {
+            try {
+                await orderService.deleteOrder(orderId);
+                fetchOrders();
+            } catch (err) {
+                setError(err.message);
+            }
+        }
+    };
+
+    const handleViewDetails = (order) => {
+        setSelectedOrder(order);
+        setIsModalOpen(true);
     };
 
     if (loading) return <div className="text-center p-4">Loading...</div>;
@@ -53,7 +70,7 @@ const OrderManagement = () => {
                             orders.map((order) => (
                                 <tr
                                     key={order._id}
-                                    className="border-b hover:bg-gray-50 cursor-pointer"
+                                    className="border-b hover:bg-gray-50"
                                 >
                                     <td className="py-4 px-4 font-medium text-gray-900 whitespace-nowrap">
                                         #{order._id.substring(0, 8)}
@@ -75,12 +92,24 @@ const OrderManagement = () => {
                                             <option value="Cancelled">Cancelled</option>
                                         </select>
                                     </td>
-                                    <td className="p-4">
+                                    <td className="p-4 flex gap-2">
+                                        <button
+                                            onClick={() => handleViewDetails(order)}
+                                            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                                        >
+                                            View
+                                        </button>
                                         <button
                                             onClick={() => handleStatusChange(order._id, "Delivered")}
-                                            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                                            className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
                                         >
-                                            Mark as Delivered
+                                            Deliver
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteOrder(order._id)}
+                                            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                                        >
+                                            Delete
                                         </button>
                                     </td>
                                 </tr>
@@ -95,6 +124,55 @@ const OrderManagement = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Order Details Modal */}
+            {isModalOpen && selectedOrder && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">Order Details</h3>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="font-semibold">Order Information</h4>
+                                <p>Order ID: #{selectedOrder._id}</p>
+                                <p>Status: {selectedOrder.status}</p>
+                                <p>Total Price: ${selectedOrder.totalPrice}</p>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold">Customer Information</h4>
+                                <p>Name: {selectedOrder.user?.name || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold">Order Items</h4>
+                                <div className="space-y-2">
+                                    {selectedOrder.orderItems?.map((item, index) => (
+                                        <div key={index} className="flex items-center gap-4 border-b pb-2">
+                                            <img
+                                                src={item.image}
+                                                alt={item.name}
+                                                className="w-12 h-12 object-cover rounded"
+                                            />
+                                            <div>
+                                                <p className="font-medium">{item.name}</p>
+                                                <p className="text-sm text-gray-500">
+                                                    Quantity: {item.quantity} × ${item.price}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
