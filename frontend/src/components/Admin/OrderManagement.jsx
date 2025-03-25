@@ -7,8 +7,6 @@ const OrderManagement = () => {
     const [error, setError] = useState(null);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editMode, setEditMode] = useState(false);
-    const [editedOrder, setEditedOrder] = useState(null);
 
     useEffect(() => {
         fetchOrders();
@@ -47,45 +45,7 @@ const OrderManagement = () => {
 
     const handleViewDetails = (order) => {
         setSelectedOrder(order);
-        setEditedOrder({
-            totalPrice: order.totalPrice,
-            customerName: order.user?.name || ''
-        });
         setIsModalOpen(true);
-        setEditMode(false);
-    };
-
-    const handleEdit = () => {
-        setEditMode(true);
-    };
-
-    const handleSave = async () => {
-        try {
-            if (!selectedOrder || !editedOrder) return;
-
-            const updateData = {
-                totalPrice: Number(editedOrder.totalPrice),
-                customerName: editedOrder.user?.name
-            };
-
-            const response = await orderService.updateOrderDetails(selectedOrder._id, updateData);
-
-            // Update the orders list with the new data
-            setOrders(prevOrders => 
-                prevOrders.map(order => 
-                    order._id === selectedOrder._id ? response : order
-                )
-            );
-
-            setSelectedOrder(response);
-            setEditMode(false);
-            
-            // Show success message
-            alert('Order updated successfully');
-        } catch (error) {
-            console.error('Save error:', error);
-            alert(error.message || 'Failed to update order details');
-        }
     };
 
     if (loading) return <div className="text-center p-4">Loading...</div>;
@@ -171,77 +131,23 @@ const OrderManagement = () => {
                     <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold">Order Details</h3>
-                            <div className="flex gap-2">
-                                {!editMode ? (
-                                    <button
-                                        onClick={handleEdit}
-                                        className="text-blue-500 hover:text-blue-700"
-                                    >
-                                        Edit
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleSave}
-                                        className="text-green-500 hover:text-green-700"
-                                    >
-                                        Save
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => {
-                                        setIsModalOpen(false);
-                                        setEditMode(false);
-                                    }}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    ×
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                ×
+                            </button>
                         </div>
                         <div className="space-y-4">
                             <div>
                                 <h4 className="font-semibold">Order Information</h4>
                                 <p>Order ID: #{selectedOrder._id}</p>
                                 <p>Status: {selectedOrder.status}</p>
-                                <p>
-                                    Total Price: $
-                                    {editMode ? (
-                                        <input
-                                            type="number"
-                                            value={editedOrder.totalPrice}
-                                            onChange={(e) =>
-                                                setEditedOrder({
-                                                    ...editedOrder,
-                                                    totalPrice: e.target.value
-                                                })
-                                            }
-                                            className="border rounded px-2 py-1 ml-1"
-                                        />
-                                    ) : (
-                                        selectedOrder.totalPrice
-                                    )}
-                                </p>
+                                <p>Total Price: ${selectedOrder.totalPrice}</p>
                             </div>
                             <div>
                                 <h4 className="font-semibold">Customer Information</h4>
-                                <p>
-                                    Name:{' '}
-                                    {editMode ? (
-                                        <input
-                                            type="text"
-                                            value={editedOrder.customerName}
-                                            onChange={(e) =>
-                                                setEditedOrder({
-                                                    ...editedOrder,
-                                                    customerName: e.target.value
-                                                })
-                                            }
-                                            className="border rounded px-2 py-1 ml-1"
-                                        />
-                                    ) : (
-                                        selectedOrder.user?.name || 'N/A'
-                                    )}
-                                </p>
+                                <p>Name: {selectedOrder.user?.name || 'N/A'}</p>
                             </div>
                             <div>
                                 <h4 className="font-semibold">Order Items</h4>

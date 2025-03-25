@@ -1,6 +1,5 @@
 const express = require("express");
 const Order = require("../models/Order");
-const User = require("../models/User"); // Add this import
 const { protect, admin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -71,52 +70,6 @@ router.put('/:id/status', protect, admin, async (req, res) => {
     } catch (error) {
         console.error('Error updating order status:', error);
         res.status(500).json({ message: 'Error updating order status' });
-    }
-});
-
-// @route   PUT /api/admin/orders/:id/details
-// @desc    Update order details (total price and customer name)
-// @access  Private/Admin
-router.put('/:id/details', protect, admin, async (req, res) => {
-    try {
-        const { totalPrice, customerName } = req.body;
-        const order = await Order.findById(req.params.id).populate('user', 'name email');
-
-        if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
-        }
-
-        // Update order details
-        if (totalPrice !== undefined) {
-            order.totalPrice = totalPrice;
-        }
-
-        // If customer name needs to be updated
-        if (customerName !== undefined && order.user) {
-            const userUpdateResult = await User.findByIdAndUpdate(
-                order.user._id,
-                { name: customerName },
-                { new: true }
-            );
-
-            if (!userUpdateResult) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-        }
-
-        const updatedOrder = await order.save();
-        
-        // Fetch fresh data with populated user
-        const populatedOrder = await Order.findById(updatedOrder._id)
-            .populate('user', 'name email');
-
-        res.json(populatedOrder);
-    } catch (error) {
-        console.error('Error updating order details:', error);
-        res.status(500).json({ 
-            message: 'Error updating order details',
-            error: error.message 
-        });
     }
 });
 
