@@ -1,66 +1,86 @@
 const express = require("express");
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 const Product = require("../models/Product");
-const { protect ,admin} = require("../middleware/authMiddleware");
+const { protect, admin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+// Multer Storage Setup
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = path.join(__dirname, "../uploads");
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true }); // Ensure directory exists
+    }
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
+
 // @route POST /api/products
-// @desc Create a new Product
+// @desc Create a new Product with Image Upload
 // @access Private/Admin
-router.post("/", protect, admin, async (req, res) => {
+router.post("/", protect, admin, upload.array("images", 5), async (req, res) => {
   try {
     const {
-        name,
-        description,
-        price,
-        discountPrice,
-        countInStock,
-        category,
-        brand,
-        sizes,
-        colors,
-        collections,
-        material,
-        gender,
-        images,
-        isFeatured,
-        isPublished,
-        tags,
-        dimensions,
-        weight,
-        sku,
+      name,
+      description,
+      price,
+      discountPrice,
+      countInStock,
+      category,
+      brand,
+      sizes,
+      colors,
+      collections,
+      material,
+      gender,
+      isFeatured,
+      isPublished,
+      tags,
+      dimensions,
+      weight,
+      sku,
     } = req.body;
 
+    // Map uploaded image files to URLs
+    const images = req.files.map(file => ({ url: `/uploads/${file.filename}` }));
+
     const product = new Product({
-        name,
-        description,
-        price,
-        discountPrice,
-        countInStock,
-        category,
-        brand,
-        sizes,
-        colors,
-        collections,
-        material,
-        gender,
-        images,
-        isFeatured,
-        isPublished,
-        tags,
-        dimensions,
-        weight,
-        sku,
-        user: req.user._id, // Reference to the admin user who created it
+      name,
+      description,
+      price,
+      discountPrice,
+      countInStock,
+      category,
+      brand,
+      sizes,
+      colors,
+      collections,
+      material,
+      gender,
+      images, // Store image URLs
+      isFeatured,
+      isPublished,
+      tags,
+      dimensions,
+      weight,
+      sku,
     });
 
-    // Save product to database
     const createdProduct = await product.save();
     res.status(201).json(createdProduct);
-  } catch (error) { 
+  } catch (error) {
     console.error("Error creating product:", error);
     res.status(500).json({ message: "Server error" });
-   }
+  }
 });
 
 
