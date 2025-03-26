@@ -187,18 +187,6 @@ const EditProductPage = () => {
           </div>
           
           <div className="mb-4">
-            <label className="block mb-2">Discount Price</label>
-            <input
-              type="number"
-              name="discountPrice"
-              value={productData.discountPrice}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-              step="0.01"
-            />
-          </div>
-          
-          <div className="mb-4">
             <label className="block mb-2">Stock Count</label>
             <input
               type="number"

@@ -7,7 +7,7 @@ const AddProductPage = () => {
     const [productData, setProductData] = useState({
         name: "",
         description: "",
-        price: 0,
+        price: "",
         discountPrice: 0,
         countInStock: 0,
         sku: "",
@@ -47,6 +47,14 @@ const AddProductPage = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        if (name === "price") {
+            // Allow only numbers
+            if (!/^\d*\.?\d*$/.test(value)) {
+                return;
+            }
+        }
+
         setProductData({ ...productData, [name]: value });
     };
 
@@ -84,6 +92,11 @@ const AddProductPage = () => {
 
         if (!productData.sku || productData.sku.trim() === "") {
             alert("SKU is required!");
+            return;
+        }
+
+        if (productData.price === "" || isNaN(productData.price)) {
+            alert("Please enter a valid numeric price.");
             return;
         }
 
@@ -203,32 +216,6 @@ const AddProductPage = () => {
                         required
                     />
                 </div>
-
-                <div className="mb-6">
-                    <label className="block font-semibold mb-2">Material</label>
-                    <input
-                        type="text"
-                        name="material"
-                        value={productData.material}
-                        onChange={handleChange}
-                        className="w-full border border-gray-300 rounded-md p-2"
-                        required
-                    />
-                </div>
-
-                <div className="mb-6">
-                    <label className="block font-semibold mb-2">Gender</label>
-                    <input
-                        type="text"
-                        name="gender"
-                        value={productData.gender}
-                        onChange={handleChange}
-                        className="w-full border border-gray-300 rounded-md p-2"
-                        required
-                    />
-                </div>
-
-
 
                 <div className="mb-6">
                     <label className="block font-semibold mb-2">Upload Images</label>
