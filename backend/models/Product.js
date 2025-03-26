@@ -8,63 +8,47 @@ const productSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: true,
   },
   price: {
     type: Number,
-    required: true,
   },
   discountPrice: {
     type: Number,
   },
   countInStock: {
     type: Number,
-    required: true,
     default: 0,
   },
   sku: {
     type: String,
     unique: true,
-    required: true,
   },
   category: {
     type: String,
-    required: true,
   },
   brand: {
     type: String,
   },
   sizes: {
-    type: [String], // Array of sizes (e.g., ["S", "M", "L"])
-    required: true,
+    type: [String],
   },
   colors: {
-    type: [String], // Array of colors (e.g., ["Red", "Blue", "Green"])
-    required: true,
+    type: [String],
   },
   collections: {
     type: String,
-    required: true,
   },
   material: {
-    type: String, // Example: "Cotton", "Polyester"
+    type: String,
   },
   gender: {
     type: String,
     enum: ["Men", "Women", "Unisex"],
     required: true,
+    default: "Unisex",
   },
-  images: [
-    {
-      url: {
-        type: String,
-        required: true,
-      },
-      altText: {
-        type: String,
-      },
-    },
-  ],
+  images: [{ url: String }], // Store image URLs here
+
   isFeatured: {
     type: Boolean,
     default: false,
@@ -82,11 +66,6 @@ const productSchema = new mongoose.Schema({
     default: 0,
   },
   tags: [String],
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
   metaTitle: {
     type: String,
   },
@@ -102,10 +81,6 @@ const productSchema = new mongoose.Schema({
     height: Number,
   },
   weight: Number,
-  
-  
-
-
-}, { timestamps: true }); // Adds createdAt & updatedAt fields automatically
+}, { timestamps: true });
 
 module.exports = mongoose.model("Product", productSchema);
