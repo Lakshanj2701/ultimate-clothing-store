@@ -1,28 +1,25 @@
-
 import React, { useState, useEffect } from 'react';
+import { adService } from '../../services/api';
 
 const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onCancelEdit }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Set form values when editing an existing advertisement
   useEffect(() => {
     if (editingAd) {
       setTitle(editingAd.title || '');
       setDescription(editingAd.description || '');
-      setAmount(editingAd.amount || '');
-      setImagePreview(editingAd.imageUrl || null);
+      setAmount(editingAd.discountAmount || '');
       setIsEditing(true);
     } else {
       setIsEditing(false);
     }
   }, [editingAd]);
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
 
     if (!title || !description || !amount) {
@@ -30,35 +27,28 @@ const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onC
       return;
     }
 
-    // Determine image URL (either from new file or existing)
-    const imageUrl = imageFile 
-      ? URL.createObjectURL(imageFile) 
-      : (imagePreview || '');
+    const adData = {
+      title,
+      description,
+      discountAmount: amount,
+      image: imageFile,
+    };
 
-    const adData = { title, description, amount, imageUrl };
+    try {
+      if (isEditing && editingAd._id) {
+        await adService.update(editingAd._id, adData);
+        alert('Advertisement updated successfully!');
+      } else {
+        await adService.create(adData);
+        alert('Advertisement added successfully!');
+      }
 
-    // If editing, update the existing advertisement
-    if (isEditing && editingIndex !== null) {
-      const existingAds = JSON.parse(localStorage.getItem('advertisements')) || [];
-      existingAds[editingIndex] = adData;
-      localStorage.setItem('advertisements', JSON.stringify(existingAds));
-      
-      if (onCancelEdit) onCancelEdit();
-      alert('Advertisement updated successfully!');
-    } 
-    // Otherwise add a new advertisement
-    else {
-      const existingAds = JSON.parse(localStorage.getItem('advertisements')) || [];
-      existingAds.push(adData);
-      localStorage.setItem('advertisements', JSON.stringify(existingAds));
-      alert('Advertisement added successfully!');
+      onAddAdvertisement();
+      resetForm();
+    } catch (error) {
+      console.error('Failed to save advertisement:', error);
+      alert('Failed to save advertisement. Please try again.');
     }
-
-    // Clear form fields
-    resetForm();
-
-    // Notify parent component
-    if (onAddAdvertisement) onAddAdvertisement();
   };
 
   const resetForm = () => {
@@ -66,20 +56,13 @@ const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onC
     setDescription('');
     setAmount('');
     setImageFile(null);
-    setImagePreview(null);
     setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    resetForm();
-    if (onCancelEdit) onCancelEdit();
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -88,9 +71,8 @@ const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onC
       <h3 className="text-xl font-bold mb-4">
         {isEditing ? 'Edit Advertisement' : 'Add New Advertisement'}
       </h3>
-      
       <div className="mb-4">
-        <label className="block text-gray-700">Title <span className="text-red-500">*</span></label>
+        <label className="block text-gray-700">Title</label>
         <input
           type="text"
           value={title}
@@ -99,9 +81,8 @@ const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onC
           required
         />
       </div>
-
       <div className="mb-4">
-        <label className="block text-gray-700">Description <span className="text-red-500">*</span></label>
+        <label className="block text-gray-700">Description</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -109,9 +90,8 @@ const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onC
           required
         />
       </div>
-
       <div className="mb-4">
-        <label className="block text-gray-700">Discount Amount (%) <span className="text-red-500">*</span></label>
+        <label className="block text-gray-700">Discount Amount (%)</label>
         <input
           type="number"
           value={amount}
@@ -120,7 +100,6 @@ const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onC
           required
         />
       </div>
-
       <div className="mb-4">
         <label className="block text-gray-700">Upload Image</label>
         <input
@@ -129,36 +108,10 @@ const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onC
           onChange={handleImageChange}
           className="w-full p-2 border border-gray-300 rounded"
         />
-        {imagePreview && (
-          <div className="mt-2">
-            <p className="text-sm text-gray-600 mb-1">Image Preview:</p>
-            <img 
-              src={imagePreview} 
-              alt="Preview" 
-              className="w-32 h-32 object-cover border rounded"
-            />
-          </div>
-        )}
       </div>
-
-      <div className="flex space-x-2">
-        <button 
-          type="submit" 
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-        >
-          {isEditing ? 'Update Advertisement' : 'Add Advertisement'}
-        </button>
-        
-        {isEditing && (
-          <button 
-            type="button"
-            onClick={handleCancel}
-            className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded"
-          >
-            Cancel
-          </button>
-        )}
-      </div>
+      <button type="submit" className="bg-blue-600 text-white py-2 px-4 rounded">
+        {isEditing ? 'Update Advertisement' : 'Add Advertisement'}
+      </button>
     </form>
   );
 };

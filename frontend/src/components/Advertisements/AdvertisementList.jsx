@@ -1,30 +1,30 @@
-
 import React, { useState, useEffect } from 'react';
+import { adService } from '../../services/api';
 
 const AdvertisementList = ({ onEdit, onDelete }) => {
   const [advertisements, setAdvertisements] = useState([]);
 
   useEffect(() => {
-    // Load advertisements from localStorage
-    const loadedAds = JSON.parse(localStorage.getItem('advertisements')) || [];
-    setAdvertisements(loadedAds);
+    const fetchAdvertisements = async () => {
+      try {
+        const ads = await adService.getAll();
+        setAdvertisements(ads);
+      } catch (error) {
+        console.error('Failed to fetch advertisements:', error);
+      }
+    };
+
+    fetchAdvertisements();
   }, []);
 
-  const handleDelete = (index) => {
-    // Create a copy of advertisements without the deleted one
-    const updatedAds = [...advertisements];
-    updatedAds.splice(index, 1);
-    
-    // Update state and localStorage
-    setAdvertisements(updatedAds);
-    localStorage.setItem('advertisements', JSON.stringify(updatedAds));
-    
-    // Call external handler if provided
-    if (onDelete) onDelete(index);
-  };
-
-  const handleEdit = (advertisement, index) => {
-    if (onEdit) onEdit(advertisement, index);
+  const handleDelete = async (id) => {
+    try {
+      await adService.delete(id);
+      setAdvertisements((prev) => prev.filter((ad) => ad._id !== id));
+      if (onDelete) onDelete();
+    } catch (error) {
+      console.error('Failed to delete advertisement:', error);
+    }
   };
 
   if (advertisements.length === 0) {
@@ -35,13 +35,13 @@ const AdvertisementList = ({ onEdit, onDelete }) => {
     <div className="mt-8">
       <h3 className="text-xl font-bold mb-4">Current Advertisements</h3>
       <div className="grid grid-cols-1 gap-4">
-        {advertisements.map((ad, index) => (
-          <div key={index} className="border rounded-lg p-4 bg-white shadow-md">
+        {advertisements.map((ad) => (
+          <div key={ad._id} className="border rounded-lg p-4 bg-white shadow-md">
             <div className="flex flex-col md:flex-row">
-              {ad.imageUrl && (
+              {ad.image && (
                 <div className="w-full md:w-1/4 mb-4 md:mb-0">
                   <img 
-                    src={ad.imageUrl} 
+                    src={ad.image} 
                     alt={ad.title} 
                     className="w-full h-32 object-cover rounded-md"
                   />
@@ -52,21 +52,21 @@ const AdvertisementList = ({ onEdit, onDelete }) => {
                   <div>
                     <h4 className="text-lg font-bold">{ad.title}</h4>
                     <p className="text-gray-600 mb-2">{ad.description}</p>
-                    {ad.amount && (
+                    {ad.discountAmount && (
                       <div className="bg-red-600 text-white inline-block px-2 py-1 rounded-full text-sm font-bold mb-2">
-                        {ad.amount}% OFF
+                        {ad.discountAmount}% OFF
                       </div>
                     )}
                   </div>
                   <div className="flex space-x-2">
                     <button 
-                      onClick={() => handleEdit(ad, index)}
+                      onClick={() => onEdit(ad)}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
                     >
                       Edit
                     </button>
                     <button 
-                      onClick={() => handleDelete(index)}
+                      onClick={() => handleDelete(ad._id)}
                       className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                     >
                       Delete
