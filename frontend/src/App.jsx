@@ -24,6 +24,10 @@ import AddProductPage from './components/Admin/AddProductPage';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
+import DiscountForm from './components/Admin/DiscountForm';
+import DiscountCard from './components/Admin/DiscountCard';
+
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -55,6 +59,9 @@ const App = () => {
             <Route path="orders" element={<OrderManagement/>}/>
             <Route path="finance" element={<FinancialManagement/>}/>
             <Route path="/admin/products/new" element={<AddProductPage />} />
+            <Route path="discounts" element={<DiscountForm />} />
+          <Route path="discounts/list" element={<DiscountCard />} />
+
           </Route>
         </Route>
       </Routes>
