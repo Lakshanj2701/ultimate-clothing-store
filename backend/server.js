@@ -15,11 +15,19 @@ const cartRoutes = require("./routes/cartRoutes");
 const checkOutRoutes = require("./routes/checkOutRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 
+const advertismentRoutes = require("./routes/advertismentRoutes");
+
+
+const adminCheckoutRoutes = require("./routes/admincheckOutRoutes");
 const app = express();
 
 dotenv.config();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // Replace with your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
 
 const PORT = process.env.PORT || 9000;
 
@@ -43,6 +51,10 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminRoutes);
 app.use("/api/admin/products", productAdminRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
+app.use("/api/admin/advertisements", advertismentRoutes);
+
+app.use("/api/admin/checkout", adminCheckoutRoutes);
+
 
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
