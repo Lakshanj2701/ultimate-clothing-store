@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import { adService } from '../../services/api';
 
 const AdvertisementList = ({ onEdit, onDelete }) => {
@@ -18,12 +19,26 @@ const AdvertisementList = ({ onEdit, onDelete }) => {
   }, []);
 
   const handleDelete = async (id) => {
-    try {
-      await adService.delete(id);
-      setAdvertisements((prev) => prev.filter((ad) => ad._id !== id));
-      if (onDelete) onDelete();
-    } catch (error) {
-      console.error('Failed to delete advertisement:', error);
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'You won\'t be able to revert this!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await adService.delete(id);
+        setAdvertisements((prev) => prev.filter((ad) => ad._id !== id));
+        if (onDelete) onDelete();
+        Swal.fire('Deleted!', 'Your advertisement has been deleted.', 'success');
+      } catch (error) {
+        console.error('Failed to delete advertisement:', error);
+        Swal.fire('Error!', 'Failed to delete advertisement.', 'error');
+      }
     }
   };
 
