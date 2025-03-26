@@ -210,7 +210,7 @@ const OrderManagement = () => {
             y: {
                 beginAtZero: true,
                 ticks: {
-                    callback: (value) => `$${value.toFixed(2)}`
+                    callback: (value) => `Rs ${value.toFixed(2)}`
                 }
             }
         }
@@ -242,12 +242,12 @@ const OrderManagement = () => {
         
         doc.setFontSize(10);
         doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 25);
-        doc.text(`Total Revenue: LKR ${totalRevenue.toFixed(2)}`, 14, 32);
+        doc.text(`Total Revenue: Rs ${totalRevenue.toFixed(2)}`, 14, 32);
 
         const columns = [
             'Order ID',
             'Customer',
-            'Total Price (LKR)',
+            'Total Price (Rs)',
             'Status',
             'Shipping Address',
             'Quantity'
@@ -292,7 +292,7 @@ const OrderManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h3 className="text-sm font-medium text-gray-500">Total Sales</h3>
-                    <p className="mt-2 text-3xl font-bold text-gray-900">LKR {totalSales.toFixed(2)}</p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">Rs {totalSales.toFixed(2)}</p>
                 </div>
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h3 className="text-sm font-medium text-gray-500">Completed Orders</h3>
@@ -528,7 +528,7 @@ const OrderManagement = () => {
                     <div className="space-y-2">
                         <div className="flex justify-between">
                             <span className="text-gray-600">Total Price:</span>
-                            <span className="font-medium">LKR. {order.totalPrice}</span>
+                            <span className="font-medium">Rs. {order.totalPrice}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">Shipping Address:</span>
@@ -598,7 +598,7 @@ const OrderManagement = () => {
                             <tr key={order._id} className="hover:bg-gray-50 transition-colors duration-200">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{order._id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.shippingAddress?.address}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">LKR.{order.totalPrice}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rs.{order.totalPrice}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.orderItems?.map(item => item.quantity).join(', ')}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <select value={order.status} onChange={(e) => handleStatusChange(order._id, e.target.value)}
