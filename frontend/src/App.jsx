@@ -21,11 +21,15 @@ import OrderDetailsPage from './pages/OrderDetailsPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import AddProductPage from './components/Admin/AddProductPage';
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
 
 const App = () => {
   return (
     <BrowserRouter>
       <Toaster position="top-right"/>
+      <ToastContainer />
+
       <Routes>
         {/* User Routes */}
         <Route path="/" element={<UserLayout/>}> 
