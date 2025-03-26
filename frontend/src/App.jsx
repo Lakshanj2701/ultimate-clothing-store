@@ -23,6 +23,7 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import AddProductPage from './components/Admin/AddProductPage';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
+import PasswordReset from './pages/PasswordReset';
 
 const App = () => {
   return (
@@ -43,6 +44,7 @@ const App = () => {
           <Route path="order-confirmation" element={<OrderConfirmationPage />} />
           <Route path="order/:id" element={<OrderDetailsPage />} />
           <Route path="my-orders" element={<MyOrdersPage/>} />
+          <Route path="PasswordReset" element={<PasswordReset/>} />
         </Route>
 
         {/* Admin Routes - Protected */}

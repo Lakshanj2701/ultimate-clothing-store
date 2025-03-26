@@ -10,7 +10,7 @@ const AdminSidebar = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        navigate("/");
+        navigate("/login");
     };
 
     

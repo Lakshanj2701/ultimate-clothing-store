@@ -102,6 +102,12 @@ const Login = () => {
                             Register
                         </Link>
                     </p>
+                    <p className="mt-6 text-center text-sm">
+                    Fogot Password?{" "}
+                    <Link to="/PasswordReset" className="text-blue-500">
+                        Recover
+                    </Link>
+                    </p>
                 </form>
             </div>
 
