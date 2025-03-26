@@ -225,7 +225,7 @@ const OrderManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h3 className="text-sm font-medium text-gray-500">Total Sales</h3>
-                    <p className="mt-2 text-3xl font-bold text-gray-900">${totalSales.toFixed(2)}</p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">LKR {totalSales.toFixed(2)}</p>
                 </div>
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h3 className="text-sm font-medium text-gray-500">Completed Orders</h3>
@@ -445,119 +445,179 @@ const OrderManagement = () => {
 
             {/* Order Management Tab */}
             {activeTab === 'orders' && (
-                <>
-                    <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                        <div className="flex gap-4 w-full sm:w-auto">
-                            <input
-                                type="text"
-                                placeholder="Search orders..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full sm:w-64"
-                            />
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="Processing">Processing</option>
-                                <option value="Shipped">Shipped</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                        </div>
+    <>
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+                <div className="relative w-full">
+                    <input
+                        type="text"
+                        placeholder="Search orders..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
                     </div>
-
-                    <div className="bg-white rounded-lg shadow overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Order ID
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Shipping Address
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Total Price
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Quantity
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-    {filteredOrders.map((order) => (
-        <tr
-            key={order._id}
-            className="hover:bg-gray-50 transition-colors duration-200"
-        >
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                #{order._id}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {order.shippingAddress?.address}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                LKR.{order.totalPrice}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {order.orderItems?.map(item => item.quantity).join(', ')}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap">
+                </div>
                 <select
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                    className={`text-sm rounded-full px-3 py-1 font-semibold ${getStatusBadgeColor(order.status)}`}
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
+                    <option value="all">All Status</option>
                     <option value="Processing">Processing</option>
                     <option value="Shipped">Shipped</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
                 </select>
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex space-x-2">
-                    <button
-                        onClick={() => {
-                            setSelectedOrder(order);
-                            setIsModalOpen(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-900"
-                    >
-                        <EyeIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                        onClick={() => handleDeleteOrder(order._id)}
-                        className="text-red-600 hover:text-red-900"
-                    >
-                        <TrashIcon className="h-5 w-5" />
-                    </button>
+            </div>
+        </div>
+
+        {/* Mobile/Tablet View */}
+        <div className="block lg:hidden space-y-4">
+            {filteredOrders.map((order) => (
+                <div 
+                    key={order._id} 
+                    className="bg-white shadow rounded-lg p-4 hover:shadow-md transition-shadow duration-300"
+                >
+                    <div className="flex justify-between items-center mb-2">
+                        <div className="font-semibold text-gray-900">
+                            Order #{order._id}
+                        </div>
+                        <select
+                            value={order.status}
+                            onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                            className={`text-xs rounded-full px-2 py-1 font-semibold ${getStatusBadgeColor(order.status)}`}
+                        >
+                            <option value="Processing">Processing</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
                     
-                    <button
-                        onClick={() => generateOrderReport(order)}
-                        className="text-green-600 hover:text-green-900"
-                    >
-                        <DocumentTextIcon className="h-5 w-5" />
-                    </button>
-                </div>
-            </td>
-        </tr>
-    ))}
-</tbody>
-                            </table>
+                    <div className="space-y-2">
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">Total Price:</span>
+                            <span className="font-medium">LKR. {order.totalPrice}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">Shipping Address:</span>
+                            <span className="text-right">{order.shippingAddress?.address}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">Quantity:</span>
+                            <span>{order.orderItems?.map(item => item.quantity).join(', ')}</span>
                         </div>
                     </div>
-                </>
-            )}
+                    
+                    <div className="flex justify-between mt-4">
+                        <button
+                            onClick={() => {
+                                setSelectedOrder(order);
+                                setIsModalOpen(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                        >
+                            <EyeIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                            onClick={() => handleDeleteOrder(order._id)}
+                            className="text-red-600 hover:text-red-900"
+                        >
+                            <TrashIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                            onClick={() => generateOrderReport(order)}
+                            className="text-green-600 hover:text-green-900"
+                        >
+                            <DocumentTextIcon className="h-5 w-5" />
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shipping Address</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredOrders.map((order) => (
+                            <tr
+                                key={order._id}
+                                className="hover:bg-gray-50 transition-colors duration-200"
+                            >
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    #{order._id}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {order.shippingAddress?.address}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    LKR.{order.totalPrice}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {order.orderItems?.map(item => item.quantity).join(', ')}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <select
+                                        value={order.status}
+                                        onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                                        className={`text-sm rounded-full px-3 py-1 font-semibold ${getStatusBadgeColor(order.status)}`}
+                                    >
+                                        <option value="Processing">Processing</option>
+                                        <option value="Shipped">Shipped</option>
+                                        <option value="Delivered">Delivered</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedOrder(order);
+                                                setIsModalOpen(true);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-900"
+                                        >
+                                            <EyeIcon className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteOrder(order._id)}
+                                            className="text-red-600 hover:text-red-900"
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => generateOrderReport(order)}
+                                            className="text-green-600 hover:text-green-900"
+                                        >
+                                            <DocumentTextIcon className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </>
+)}
             
             <OrderModal />
         </div>
