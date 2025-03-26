@@ -30,6 +30,7 @@ ChartJS.register(
 );
 
 const OrderManagement = () => {
+    // State declarations
     const [activeTab, setActiveTab] = useState('sales');
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -49,6 +50,7 @@ const OrderManagement = () => {
         fetchOrders();
     }, []);
 
+    // Process and format sales data for different time periods
     const processSalesData = (orders) => {
         const now = new Date();
         const daily = {};
@@ -107,6 +109,7 @@ const OrderManagement = () => {
         });
     };
 
+    // Fetch orders from the API
     const fetchOrders = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/orders`, {
@@ -124,6 +127,7 @@ const OrderManagement = () => {
         }
     };
 
+    // Handle order status updates
     const handleStatusChange = async (orderId, status) => {
         try {
             await axios.put(
@@ -142,6 +146,7 @@ const OrderManagement = () => {
         }
     };
 
+    // Handle order deletion with confirmation
     const handleDeleteOrder = (orderId) => {
         Swal.fire({
             title: "Are you sure?",
@@ -164,6 +169,7 @@ const OrderManagement = () => {
         });
     };
 
+    // Get appropriate color classes for status badges
     const getStatusBadgeColor = (status) => {
         const colors = {
             'Processing': 'bg-yellow-100 text-yellow-800',
@@ -174,6 +180,7 @@ const OrderManagement = () => {
         return colors[status] || 'bg-gray-100 text-gray-800';
     };
 
+    // Filter orders based on search term and status
     const filteredOrders = orders.filter(order => {
         const matchesSearch = (
             order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -183,6 +190,7 @@ const OrderManagement = () => {
         return matchesSearch && matchesStatus;
     });
 
+    // Chart configuration options
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -224,32 +232,7 @@ const OrderManagement = () => {
         };
     };
 
- 
-    
-
-    const SalesOverview = () => {
-        const totalSales = orders.reduce((sum, order) => sum + order.totalPrice, 0);
-        const completedOrders = orders.filter(order => order.status === 'Delivered').length;
-        const pendingOrders = orders.filter(order => order.status === 'Processing').length;
-
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-white p-6 rounded-lg shadow">
-                    <h3 className="text-sm font-medium text-gray-500">Total Sales</h3>
-                    <p className="mt-2 text-3xl font-bold text-gray-900">LKR {totalSales.toFixed(2)}</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow">
-                    <h3 className="text-sm font-medium text-gray-500">Completed Orders</h3>
-                    <p className="mt-2 text-3xl font-bold text-green-600">{completedOrders}</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow">
-                    <h3 className="text-sm font-medium text-gray-500">Pending Orders</h3>
-                    <p className="mt-2 text-3xl font-bold text-yellow-600">{pendingOrders}</p>
-                </div>
-            </div>
-        );
-    };
-
+    // Generate PDF report for orders
     const generatePDF = () => {
         const doc = new jsPDF();
         const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
@@ -299,6 +282,31 @@ const OrderManagement = () => {
     };
     
     
+    // Sales Overview Component
+    const SalesOverview = () => {
+        const totalSales = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+        const completedOrders = orders.filter(order => order.status === 'Delivered').length;
+        const pendingOrders = orders.filter(order => order.status === 'Processing').length;
+
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="bg-white p-6 rounded-lg shadow">
+                    <h3 className="text-sm font-medium text-gray-500">Total Sales</h3>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">LKR {totalSales.toFixed(2)}</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow">
+                    <h3 className="text-sm font-medium text-gray-500">Completed Orders</h3>
+                    <p className="mt-2 text-3xl font-bold text-green-600">{completedOrders}</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow">
+                    <h3 className="text-sm font-medium text-gray-500">Pending Orders</h3>
+                    <p className="mt-2 text-3xl font-bold text-yellow-600">{pendingOrders}</p>
+                </div>
+            </div>
+        );
+    };
+
+    // Order Details Modal Component
     const OrderModal = () => (
         <Transition appear show={isModalOpen} as={Fragment}>
             <Dialog
@@ -372,6 +380,7 @@ const OrderManagement = () => {
         </Transition>
     );
 
+    // Loading and Error States
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -384,6 +393,7 @@ const OrderManagement = () => {
         </div>
     );
 
+    // Main Component Render
     return (
         <div className="max-w-7xl mx-auto p-6">
             <div className="mb-8">
