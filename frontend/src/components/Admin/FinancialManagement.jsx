@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import Swal from 'sweetalert2'; // Import SweetAlert2
+import Swal from 'sweetalert2';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const FinanceManagement = () => {
@@ -12,7 +12,8 @@ const FinanceManagement = () => {
     const [totalRevenue, setTotalRevenue] = useState(0);
     const [dateRange, setDateRange] = useState('all');
     const [chartData, setChartData] = useState([]);
-    
+    const [searchTerm, setSearchTerm] = useState('');
+
     useEffect(() => {
         fetchTransactions();
     }, [dateRange]);
@@ -108,6 +109,20 @@ const FinanceManagement = () => {
         setTotalRevenue(total);
     };
 
+    // Filtered and Searched Transactions
+    const filteredAndSearchedTransactions = useMemo(() => {
+        // First filter by date range
+        const filteredByDateRange = filterTransactionsByDateRange(transactions);
+
+        // Then filter by search term
+        return filteredByDateRange.filter(transaction => 
+            Object.values(transaction).some(value => 
+                String(value).toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            transaction.user.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [transactions, dateRange, searchTerm]);
+
     const handleDeleteTransaction = async (transactionId) => {
         // Show SweetAlert confirmation dialog
         const result = await Swal.fire({
@@ -158,7 +173,7 @@ const FinanceManagement = () => {
 
     const handleStatusChange = async (transactionId, newStatus) => {
         try {
-            const token = localStorage.getItem('token'); // Retrieve token from localStorage
+            const token = localStorage.getItem('token'); 
     
             if (!token) {
                 toast.error('Authentication token missing. Please log in again.');
@@ -170,7 +185,7 @@ const FinanceManagement = () => {
                 { paymentStatus: newStatus },
                 {
                     headers: {
-                        Authorization: `Bearer ${token}` // Attach token in headers
+                        Authorization: `Bearer ${token}` 
                     }
                 }
             );
@@ -202,7 +217,7 @@ const FinanceManagement = () => {
             'Payment Method'
         ];
 
-        const rows = transactions.map(t => [
+        const rows = filteredAndSearchedTransactions.map(t => [
             t.id,
             t.user.name,
             t.amount.toFixed(2),
@@ -250,6 +265,14 @@ const FinanceManagement = () => {
                     <option value="month">Last Month</option>
                     <option value="year">Last Year</option>
                 </select>
+
+                <input 
+                    type="text"
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="border rounded px-4 py-2 flex-grow"
+                />
             </div>
 
             <div className="bg-white p-6 rounded shadow-md mb-6">
@@ -278,7 +301,7 @@ const FinanceManagement = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {transactions.map((transaction) => (
+                        {filteredAndSearchedTransactions.map((transaction) => (
                             <tr key={transaction.id}>
                                 <td className="px-6 py-4 border-b">{transaction.id}</td>
                                 <td className="px-6 py-4 border-b">${transaction.amount}</td>
@@ -306,6 +329,12 @@ const FinanceManagement = () => {
                         ))}
                     </tbody>
                 </table>
+
+                {filteredAndSearchedTransactions.length === 0 && (
+                    <div className="text-center py-4 text-gray-500">
+                        No transactions found matching your search.
+                    </div>
+                )}
             </div>
         </div>
     );
