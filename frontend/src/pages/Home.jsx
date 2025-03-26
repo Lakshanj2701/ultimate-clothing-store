@@ -6,6 +6,9 @@ import ProductDetails from '../components/Products/ProductDetails';
 import ProductGrid from '../components/Products/ProductGrid';
 import FeaturedCollection from '../components/Products/FeaturedCollection';
 import FeaturesSection from '../components/Products/FeaturesSection';
+import PromotionalBanner from '../components/Advertisements/PromotionalBanner';
+import DiscountAds from '../components/Advertisements/DiscountAds'; // Keep this
+import FeaturedDeals from '../components/Advertisements/FeaturedDeals'; // Add this import
 
 const placeholderProducts = [
   {
@@ -61,8 +64,10 @@ const placeholderProducts = [
 const Home = () => {
   return (
     <div>
+        <PromotionalBanner />
         <Hero/>
         <GenderCollectionSection/>
+        <DiscountAds />
         <NewArrivals/>
         {/* best seller sectoin*/}
         <h2 className="text-3xl text-center font-bold mb-4">

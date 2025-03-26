@@ -9,6 +9,7 @@ import UserManagement from './components/Admin/UserManagement';
 import ProductManagement from './components/Admin/ProductManagement';
 import EditProductPage from './components/Admin/EditProductPage';
 import OrderManagement from './components/Admin/OrderManagement';
+import FinancialManagement from './components/Admin/FinancialManagement';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
@@ -19,11 +20,20 @@ import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
+import AddProductPage from './components/Admin/AddProductPage';
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
+
+import DiscountForm from './components/Admin/DiscountForm';
+import DiscountCard from './components/Admin/DiscountCard';
+
 
 const App = () => {
   return (
     <BrowserRouter>
       <Toaster position="top-right"/>
+      <ToastContainer />
+
       <Routes>
         {/* User Routes */}
         <Route path="/" element={<UserLayout/>}> 
@@ -47,6 +57,11 @@ const App = () => {
             <Route path="products" element={<ProductManagement/>}/>
             <Route path="products/:id/edit" element={<EditProductPage/>}/>
             <Route path="orders" element={<OrderManagement/>}/>
+            <Route path="finance" element={<FinancialManagement/>}/>
+            <Route path="/admin/products/new" element={<AddProductPage />} />
+            <Route path="discounts" element={<DiscountForm />} />
+          <Route path="discounts/list" element={<DiscountCard />} />
+
           </Route>
         </Route>
       </Routes>

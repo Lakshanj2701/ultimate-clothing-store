@@ -62,6 +62,30 @@ const AdminSidebar = () => {
             </NavLink>
 
             <NavLink
+                to="/admin/finance"
+                className={({ isActive }) =>
+                    isActive
+                    ? "bg-gray-700 text-white py-3 px-4 rounded flex items-center space-x-2"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white py-3 px-4 rounded flex items-center space-x-2"
+                }
+                >
+                <FaClipboardList />
+                <span>Finance</span>
+            </NavLink>
+             {/* New Discount Links */}
+             <NavLink
+                    to="/admin/discounts"
+                    className={({ isActive }) =>
+                        isActive
+                            ? "bg-gray-700 text-white py-3 px-4 rounded flex items-center space-x-2"
+                            : "text-gray-300 hover:bg-gray-700 hover:text-white py-3 px-4 rounded flex items-center space-x-2"
+                    }
+                >
+                    <FaClipboardList />
+                    <span>Create Discount</span>
+                </NavLink>
+
+            <NavLink
                 to="/"
                 className={({ isActive }) =>
                     isActive
@@ -72,6 +96,8 @@ const AdminSidebar = () => {
                 <FaStore />
                 <span>Shop</span>
             </NavLink>
+                
+
          </nav>
 
          <div className="my-6">
