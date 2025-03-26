@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Swal from 'sweetalert2'; // Import SweetAlert2
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const FinanceManagement = () => {
@@ -26,8 +27,6 @@ const FinanceManagement = () => {
         const aggregatedData = aggregateDataByDate(filteredTransactions);
         setChartData(aggregatedData);
     }
-
-
 
     const filterTransactionsByDateRange = (transactions) => {
         const now = new Date();
@@ -54,7 +53,7 @@ const FinanceManagement = () => {
 
     const aggregateDataByDate = (transactions) => {
         const aggregated = transactions.reduce((acc, transaction) => {
-            const date = transaction.date; // Assuming date is in ISO format (yyyy-mm-dd)
+            const date = transaction.date; 
             const amount = transaction.amount;
             if (!acc[date]) {
                 acc[date] = { date, amount: 0 };
@@ -68,7 +67,6 @@ const FinanceManagement = () => {
             amount: data.amount
         }));
     };
-
 
     const fetchTransactions = async () => {
         try {
@@ -110,31 +108,53 @@ const FinanceManagement = () => {
         setTotalRevenue(total);
     };
 
-
     const handleDeleteTransaction = async (transactionId) => {
-        try {
-            const token = localStorage.getItem('token'); 
-            if (!token) {
-                toast.error('Authentication token missing. Please log in again.');
-                return;
+        // Show SweetAlert confirmation dialog
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this transaction deletion!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        // If user confirms deletion
+        if (result.isConfirmed) {
+            try {
+                const token = localStorage.getItem('token'); 
+                if (!token) {
+                    toast.error('Authentication token missing. Please log in again.');
+                    return;
+                }
+        
+                // Make the DELETE request to the backend
+                await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/checkout/${transactionId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+        
+                // Remove the deleted transaction from the state
+                setTransactions(prev => prev.filter(transaction => transaction.id !== transactionId));
+        
+                // Show success message with SweetAlert
+                Swal.fire(
+                    'Deleted!',
+                    'The transaction has been deleted.',
+                    'success'
+                );
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Show error message with SweetAlert
+                Swal.fire(
+                    'Error!',
+                    'Failed to delete transaction.',
+                    'error'
+                );
             }
-    
-            // Make the DELETE request to the backend
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/checkout/${transactionId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-    
-            // Remove the deleted transaction from the state
-            setTransactions(prev => prev.filter(transaction => transaction.id !== transactionId));
-    
-            toast.success('Transaction deleted successfully');
-        } catch (error) {
-            console.error('Error:', error);
-            toast.error('Failed to delete transaction');
         }
     };
-    
-    
 
     const handleStatusChange = async (transactionId, newStatus) => {
         try {
@@ -250,7 +270,6 @@ const FinanceManagement = () => {
                     <thead>
                         <tr className="bg-gray-100">
                             <th className="px-6 py-3 border-b">ID</th>
-                        
                             <th className="px-6 py-3 border-b">Amount</th>
                             <th className="px-6 py-3 border-b">Status</th>
                             <th className="px-6 py-3 border-b">Date</th>
@@ -262,10 +281,9 @@ const FinanceManagement = () => {
                         {transactions.map((transaction) => (
                             <tr key={transaction.id}>
                                 <td className="px-6 py-4 border-b">{transaction.id}</td>
-                               
                                 <td className="px-6 py-4 border-b">${transaction.amount}</td>
                                 <td className="px-6 py-4 border-b">
-                                <select 
+                                    <select 
                                         value={transaction.status}
                                         onChange={(e) => handleStatusChange(transaction.id, e.target.value)}
                                         className="border rounded px-2 py-1"
@@ -277,16 +295,12 @@ const FinanceManagement = () => {
                                 <td className="px-6 py-4 border-b">{transaction.date}</td>
                                 <td className="px-6 py-4 border-b">{transaction.paymentMethod}</td>
                                 <td className="px-6 py-4 border-b">
-    
-                                <button 
-        onClick={() => handleDeleteTransaction(transaction.id)}
-        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-    >
-        Delete
-    </button>
-                                        
-                    
-                                    
+                                    <button 
+                                        onClick={() => handleDeleteTransaction(transaction.id)}
+                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                                    >
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         ))}
