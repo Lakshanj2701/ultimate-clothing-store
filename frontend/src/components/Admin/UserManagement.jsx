@@ -1,21 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const UserManagement = () => {
-    const users = [
-        {
-            _id: 123213,
-            name: "John Doe",
-            email: "john@example.com",
-            role: "admin",
-        },
-    ];
-
+    const [users, setUsers] = useState([]);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",
-        role: "customer", // Default role
+        role: "customer",
     });
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setUsers(response.data);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
+    };
+
+    const handleAddUser = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users`, formData, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setUsers([...users, response.data.user]);
+            setFormData({ name: "", email: "", password: "", role: "customer" });
+        } catch (error) {
+            console.error("Error adding user:", error);
+        }
+    };
+
+    const handleDeleteUser = async (userId) => {
+        if (window.confirm("Are you sure you want to delete this user?")) {
+            try {
+                const token = localStorage.getItem('token');
+                await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setUsers(users.filter((user) => user._id !== userId));
+            } catch (error) {
+                console.error("Error deleting user:", error);
+            }
+        }
+    };
 
     const handleChange = (e) => {
         setFormData({
@@ -24,30 +61,23 @@ const UserManagement = () => {
         });
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        console.log(formData);
-        // Reset the form after submission
-        setFormData({
-            name: "",
-            email: "",
-            password: "",
-            role: "customer",
-        });
-    };
+    const handleRoleChange = async (userId, newRole) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.put(
+                `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`,
+                { role: newRole },
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
 
-    const handleRoleChange = (userId, newRole) => {
-        console.log({ id: userId, role: newRole });
-    };
-
-
-    const handleDeleteUser = (userId) => {
-        if (window.confirm("Are you sure you want to delete this user?")) {
-          console.log("Deleting user with ID:", userId);
-          // Add delete logic here (e.g., API call or update state)
+            // Update the user's role in the local state
+            setUsers(users.map((user) => (user._id === userId ? response.data.user : user)));
+        } catch (error) {
+            console.error("Error updating user role:", error);
         }
-      };
-      
+    };
 
     return (
         <div className="max-w-7xl mx-auto p-6">
@@ -56,7 +86,7 @@ const UserManagement = () => {
             {/* Add New User Form */}
             <div className="p-6 rounded-lg mb-6">
                 <h3 className="text-lg font-bold mb-4">Add New User</h3>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleAddUser}>
                     <div className="mb-4">
                         <label className="block text-gray-700">Name</label>
                         <input
@@ -140,13 +170,12 @@ const UserManagement = () => {
                                     </select>
                                 </td>
                                 <td className="p-4">
-                                <button
-                                onClick={() => handleDeleteUser(user._id)}
-                                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                                >
-                                Delete
-                                </button>
-
+                                    <button
+                                        onClick={() => handleDeleteUser(user._id)}
+                                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                                    >
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         ))}
