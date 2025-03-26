@@ -17,6 +17,7 @@ import { Bar } from 'react-chartjs-2';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
+import Swal from "sweetalert2";
 
 // Register ChartJS components
 ChartJS.register(
@@ -141,19 +142,26 @@ const OrderManagement = () => {
         }
     };
 
-    const handleDeleteOrder = async (orderId) => {
-        try {
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/${orderId}`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
-            fetchOrders();
-            setIsModalOpen(false);
-            toast.success('Order deleted successfully');
-        } catch (err) {
-            toast.error('Failed to delete order');
-        }
+    const handleDeleteOrder = (orderId) => {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won’t be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!",
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await fetch(`/api/orders/${orderId}`, { method: "DELETE" });
+                    setOrders(orders.filter((order) => order._id !== orderId));
+                    Swal.fire("Deleted!", "The order has been deleted.", "success");
+                } catch (error) {
+                    Swal.fire("Error!", "There was an issue deleting the order.", "error");
+                }
+            }
+        });
     };
 
     const getStatusBadgeColor = (status) => {
@@ -215,6 +223,9 @@ const OrderManagement = () => {
             ]
         };
     };
+
+ 
+    
 
     const SalesOverview = () => {
         const totalSales = orders.reduce((sum, order) => sum + order.totalPrice, 0);
