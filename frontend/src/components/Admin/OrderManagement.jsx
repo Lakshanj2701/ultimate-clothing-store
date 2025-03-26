@@ -14,6 +14,9 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
 // Register ChartJS components
 ChartJS.register(
@@ -236,6 +239,59 @@ const OrderManagement = () => {
         );
     };
 
+    const generateOrderReport = (order) => {
+        try {
+            // Create a new jsPDF instance
+            const doc = new jsPDF();
+    
+            // Set document properties
+            doc.setFontSize(14);
+            doc.text('Order Report', 10, 10);
+    
+            // Basic Order Information
+            doc.setFontSize(10);
+            doc.text(`Order ID: ${order._id || 'N/A'}`, 10, 20);
+            doc.text(`Customer Name: ${order.user?.name || 'N/A'}`, 10, 30);
+            doc.text(`Total Price: $${order.totalPrice?.toFixed(2) || 'N/A'}`, 10, 40);
+            doc.text(`Order Status: ${order.status || 'N/A'}`, 10, 50);
+    
+            // Shipping Address
+            if (order.shippingAddress) {
+                doc.text('Shipping Address:', 10, 60);
+                doc.text(`${order.shippingAddress.address || 'N/A'}`, 10, 70);
+            }
+    
+            // Order Items Table
+            const tableColumn = ["Item", "Quantity", "Price"];
+            const tableRows = order.orderItems.map(item => [
+                item.name || 'N/A', 
+                item.quantity || 'N/A', 
+                `$${(item.price * item.quantity).toFixed(2)}` || 'N/A'
+            ]);
+    
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 80,
+                styles: { 
+                    fontSize: 9,
+                    cellPadding: 3 
+                },
+                columnStyles: { 
+                    0: { cellWidth: 80 },
+                    1: { cellWidth: 40, halign: 'center' },
+                    2: { cellWidth: 40, halign: 'right' }
+                }
+            });
+    
+            // Save the PDF
+            doc.save(`Order_${order._id}_Report.pdf`);
+        } catch (error) {
+            console.error('PDF Generation Error:', error);
+            toast.error('Failed to generate order report');
+        }
+    };
+
     const OrderModal = () => (
         <Transition appear show={isModalOpen} as={Fragment}>
             <Dialog
@@ -351,7 +407,7 @@ const OrderManagement = () => {
                                 : 'text-gray-500 hover:text-gray-700 hover:border-gray-300 border-transparent border-b-2'
                         }`}
                     >
-                        Order Management
+                        Order Details
                     </button>
                 </nav>
             </div>
@@ -422,10 +478,13 @@ const OrderManagement = () => {
                                             Order ID
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Customer
+                                            Shipping Address
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Total Price
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Quantity
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Status
@@ -436,54 +495,64 @@ const OrderManagement = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredOrders.map((order) => (
-                                        <tr
-                                            key={order._id}
-                                            className="hover:bg-gray-50 transition-colors duration-200"
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                #{order._id}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {order.customerName}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                ${order.totalPrice}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <select
-                                                    value={order.status}
-                                                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                                                    className={`text-sm rounded-full px-3 py-1 font-semibold ${getStatusBadgeColor(order.status)}`}
-                                                >
-                                                    <option value="Processing">Processing</option>
-                                                    <option value="Shipped">Shipped</option>
-                                                    <option value="Delivered">Delivered</option>
-                                                    <option value="Cancelled">Cancelled</option>
-                                                </select>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex space-x-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedOrder(order);
-                                                            setIsModalOpen(true);
-                                                        }}
-                                                        className="text-blue-600 hover:text-blue-900"
-                                                    >
-                                                        <EyeIcon className="h-5 w-5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteOrder(order._id)}
-                                                        className="text-red-600 hover:text-red-900"
-                                                    >
-                                                        <TrashIcon className="h-5 w-5" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
+    {filteredOrders.map((order) => (
+        <tr
+            key={order._id}
+            className="hover:bg-gray-50 transition-colors duration-200"
+        >
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                #{order._id}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {order.shippingAddress?.address}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                LKR.{order.totalPrice}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {order.orderItems?.map(item => item.quantity).join(', ')}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+                <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                    className={`text-sm rounded-full px-3 py-1 font-semibold ${getStatusBadgeColor(order.status)}`}
+                >
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => {
+                            setSelectedOrder(order);
+                            setIsModalOpen(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-900"
+                    >
+                        <EyeIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                        onClick={() => handleDeleteOrder(order._id)}
+                        className="text-red-600 hover:text-red-900"
+                    >
+                        <TrashIcon className="h-5 w-5" />
+                    </button>
+                    
+                    <button
+                        onClick={() => generateOrderReport(order)}
+                        className="text-green-600 hover:text-green-900"
+                    >
+                        <DocumentTextIcon className="h-5 w-5" />
+                    </button>
+                </div>
+            </td>
+        </tr>
+    ))}
+</tbody>
                             </table>
                         </div>
                     </div>
