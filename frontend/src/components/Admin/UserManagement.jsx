@@ -80,15 +80,15 @@ const UserManagement = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto p-6">
-            <h2 className="text-2xl font-bold mb-6">User Management</h2>
+        <div className="max-w-7xl mx-auto p-4 md:p-6">
+            <h2 className="text-2xl font-bold mb-6 text-center md:text-left">User Management</h2>
 
             {/* Add New User Form */}
-            <div className="p-6 rounded-lg mb-6">
-                <h3 className="text-lg font-bold mb-4">Add New User</h3>
-                <form onSubmit={handleAddUser}>
-                    <div className="mb-4">
-                        <label className="block text-gray-700">Name</label>
+            <div className="p-4 md:p-6 rounded-lg mb-6 bg-white shadow-md">
+                <h3 className="text-lg font-bold mb-4 text-center md:text-left">Add New User</h3>
+                <form onSubmit={handleAddUser} className="space-y-4">
+                    <div>
+                        <label className="block text-gray-700 mb-1">Name</label>
                         <input
                             type="text"
                             name="name"
@@ -98,8 +98,8 @@ const UserManagement = () => {
                             required
                         />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700">Email</label>
+                    <div>
+                        <label className="block text-gray-700 mb-1">Email</label>
                         <input
                             type="email"
                             name="email"
@@ -109,8 +109,8 @@ const UserManagement = () => {
                             required
                         />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700">Password</label>
+                    <div>
+                        <label className="block text-gray-700 mb-1">Password</label>
                         <input
                             type="password"
                             name="password"
@@ -120,8 +120,8 @@ const UserManagement = () => {
                             required
                         />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700">Role</label>
+                    <div>
+                        <label className="block text-gray-700 mb-1">Role</label>
                         <select
                             name="role"
                             value={formData.role}
@@ -134,7 +134,7 @@ const UserManagement = () => {
                     </div>
                     <button
                         type="submit"
-                        className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                        className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
                     >
                         Add User
                     </button>
