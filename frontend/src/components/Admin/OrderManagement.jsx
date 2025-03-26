@@ -15,7 +15,7 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import Swal from "sweetalert2";
 
@@ -250,59 +250,55 @@ const OrderManagement = () => {
         );
     };
 
-    const generateOrderReport = (order) => {
-        try {
-            // Create a new jsPDF instance
-            const doc = new jsPDF();
-    
-            // Set document properties
-            doc.setFontSize(14);
-            doc.text('Order Report', 10, 10);
-    
-            // Basic Order Information
-            doc.setFontSize(10);
-            doc.text(`Order ID: ${order._id || 'N/A'}`, 10, 20);
-            doc.text(`Customer Name: ${order.user?.name || 'N/A'}`, 10, 30);
-            doc.text(`Total Price: $${order.totalPrice?.toFixed(2) || 'N/A'}`, 10, 40);
-            doc.text(`Order Status: ${order.status || 'N/A'}`, 10, 50);
-    
-            // Shipping Address
-            if (order.shippingAddress) {
-                doc.text('Shipping Address:', 10, 60);
-                doc.text(`${order.shippingAddress.address || 'N/A'}`, 10, 70);
-            }
-    
-            // Order Items Table
-            const tableColumn = ["Item", "Quantity", "Price"];
-            const tableRows = order.orderItems.map(item => [
-                item.name || 'N/A', 
-                item.quantity || 'N/A', 
-                `$${(item.price * item.quantity).toFixed(2)}` || 'N/A'
-            ]);
-    
-            doc.autoTable({
-                head: [tableColumn],
-                body: tableRows,
-                startY: 80,
-                styles: { 
-                    fontSize: 9,
-                    cellPadding: 3 
-                },
-                columnStyles: { 
-                    0: { cellWidth: 80 },
-                    1: { cellWidth: 40, halign: 'center' },
-                    2: { cellWidth: 40, halign: 'right' }
-                }
-            });
-    
-            // Save the PDF
-            doc.save(`Order_${order._id}_Report.pdf`);
-        } catch (error) {
-            console.error('PDF Generation Error:', error);
-            toast.error('Failed to generate order report');
-        }
-    };
+    const generatePDF = () => {
+        const doc = new jsPDF();
+        const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+        
+        doc.setFontSize(20);
+        doc.text('Order Management Report', 14, 15);
+        
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 25);
+        doc.text(`Total Revenue: LKR ${totalRevenue.toFixed(2)}`, 14, 32);
 
+        const columns = [
+            'Order ID',
+            'Customer',
+            'Total Price (LKR)',
+            'Status',
+            'Shipping Address',
+            'Quantity'
+        ];
+
+        const rows = filteredOrders.map(order => [
+            order._id,
+            order.user?.name || 'N/A',
+            order.totalPrice.toFixed(2),
+            order.status,
+            order.shippingAddress?.address || 'N/A',
+            order.orderItems?.map(item => item.quantity).join(', ') || '0'
+        ]);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [columns],
+            body: rows,
+            theme: 'striped',
+            styles: { 
+                fontSize: 8,
+                cellPadding: 3
+            },
+            headStyles: { 
+                fillColor: [59, 130, 246],  // Tailwind blue-500
+                textColor: 255 
+            }
+        });
+
+        doc.save('Order_Management_Report.pdf');
+        toast.success('Report generated successfully');
+    };
+    
+    
     const OrderModal = () => (
         <Transition appear show={isModalOpen} as={Fragment}>
             <Dialog
@@ -488,7 +484,16 @@ const OrderManagement = () => {
         </div>
 
         {/* Mobile/Tablet View */}
-        <div className="block lg:hidden space-y-4">
+        <div className="lg:hidden">
+            <div className="sticky top-0 flex justify-end p-4 bg-white z-10 mb-4">
+                <button
+                    onClick={() => generatePDF(filteredOrders)}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-all duration-300 shadow-sm hover:shadow-md w-full sm:w-auto"
+                >
+                    <DocumentTextIcon className="h-5 w-5 flex-shrink-0" />
+                    <span className="sm:inline">Download Report</span>
+                </button>
+            </div>
             {filteredOrders.map((order) => (
                 <div 
                     key={order._id} 
@@ -526,7 +531,7 @@ const OrderManagement = () => {
                     </div>
                     
                     <div className="flex justify-between mt-4">
-                        <button
+                        {/*<button
                             onClick={() => {
                                 setSelectedOrder(order);
                                 setIsModalOpen(true);
@@ -534,27 +539,39 @@ const OrderManagement = () => {
                             className="text-blue-600 hover:text-blue-900"
                         >
                             <EyeIcon className="h-5 w-5" />
-                        </button>
+                        </button>*/}
                         <button
                             onClick={() => handleDeleteOrder(order._id)}
                             className="text-red-600 hover:text-red-900"
                         >
                             <TrashIcon className="h-5 w-5" />
                         </button>
-                        <button
+                       {/* <button
                             onClick={() => generateOrderReport(order)}
                             className="text-green-600 hover:text-green-900"
                         >
                             <DocumentTextIcon className="h-5 w-5" />
-                        </button>
+                        </button>*/}
                     </div>
                 </div>
             ))}
         </div>
 
+        {/* Generate Report */}        
+
         {/* Desktop View */}
         <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
+                <div className="sticky top-0 flex justify-end p-4 bg-white z-10">
+                    <button
+                        onClick={() => generatePDF(filteredOrders)}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-all duration-300 shadow-sm hover:shadow-md w-auto min-w-[120px] sm:min-w-[160px]"
+                    >
+                        <DocumentTextIcon className="h-5 w-5 flex-shrink-0" />
+                        <span className="hidden sm:inline whitespace-nowrap">Download Report</span>
+                        <span className="sm:hidden">PDF</span>
+                    </button>
+                </div>
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -568,28 +585,14 @@ const OrderManagement = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {filteredOrders.map((order) => (
-                            <tr
-                                key={order._id}
-                                className="hover:bg-gray-50 transition-colors duration-200"
-                            >
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    #{order._id}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {order.shippingAddress?.address}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    LKR.{order.totalPrice}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {order.orderItems?.map(item => item.quantity).join(', ')}
-                                </td>
+                            <tr key={order._id} className="hover:bg-gray-50 transition-colors duration-200">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{order._id}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.shippingAddress?.address}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">LKR.{order.totalPrice}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.orderItems?.map(item => item.quantity).join(', ')}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <select
-                                        value={order.status}
-                                        onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                                        className={`text-sm rounded-full px-3 py-1 font-semibold ${getStatusBadgeColor(order.status)}`}
-                                    >
+                                    <select value={order.status} onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                                        className={`text-sm rounded-full px-3 py-1 font-semibold ${getStatusBadgeColor(order.status)}`}>
                                         <option value="Processing">Processing</option>
                                         <option value="Shipped">Shipped</option>
                                         <option value="Delivered">Delivered</option>
@@ -598,27 +601,15 @@ const OrderManagement = () => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div className="flex space-x-2">
-                                        <button
-                                            onClick={() => {
-                                                setSelectedOrder(order);
-                                                setIsModalOpen(true);
-                                            }}
-                                            className="text-blue-600 hover:text-blue-900"
-                                        >
+                                        {/*<button onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }} className="text-blue-600 hover:text-blue-900">
                                             <EyeIcon className="h-5 w-5" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteOrder(order._id)}
-                                            className="text-red-600 hover:text-red-900"
-                                        >
+                                        </button>*/}
+                                        <button onClick={() => handleDeleteOrder(order._id)} className="text-red-600 hover:text-red-900">
                                             <TrashIcon className="h-5 w-5" />
                                         </button>
-                                        <button
-                                            onClick={() => generateOrderReport(order)}
-                                            className="text-green-600 hover:text-green-900"
-                                        >
+                                        {/*<button onClick={() => generateOrderReport(order)} className="text-green-600 hover:text-green-900">
                                             <DocumentTextIcon className="h-5 w-5" />
-                                        </button>
+                                        </button>*/}
                                     </div>
                                 </td>
                             </tr>
