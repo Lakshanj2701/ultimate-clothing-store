@@ -30,7 +30,7 @@ router.put("/:id", protect, admin, async (req, res) => {
 
       if (checkorders) {
         checkorders.paymentStatus = req.body.paymentStatus; // Set new payment status
-        checkorders.paidAt = req.body.paymentStatus === "paid" ? Date.now() : null; // Set paidAt if pai
+        checkorders.paidAt = req.body.paymentStatus === "paid" ? Date.now() : null; // Set paidAt if paid
 
           const updatedOrder = await checkorders.save();
           res.json(updatedOrder);
@@ -85,7 +85,7 @@ router.post('/create' , protect , async (req , res) => {
             name: product.name,
             image: product.image,
             price: product.price,
-            quantity: item.quantity, // Assuming quantity is passed with checkout items
+            quantity: item.quantity, 
         };
     });
 
@@ -126,12 +126,12 @@ router.post('/create', protect, async (req, res) => {
       const totalPrice = 0;
   
       // 4. Create a new Checkout entry with no products
-      const newCheckout = new Checkout({
+      const newCheckout = new checkOut({
         user: userId,
-        checkoutItems, // Empty checkoutItems array
+        checkoutItems, 
         shippingAddress,
         paymentMethod,
-        totalPrice, // 0 as no products are added
+        totalPrice, 
       });
   
       // 5. Save checkout entry to the database
