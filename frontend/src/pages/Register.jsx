@@ -28,12 +28,12 @@ const Register = () => {
 
             // If registration is successful, show a success message and redirect
             if (response.status === 201) {
-                toast.success("Registration successful! Redirecting to login...");
+                toast.success("Registration successful! Redirecting to login...");//email validation
                 setTimeout(() => navigate('/login'), 3000); // Redirect after 3 seconds
             }
         } catch (error) {
             if (error.response?.status === 400 && error.response?.data?.message === "User already exists") {
-                toast.error("This email is already registered. Please use a different email.");
+                toast.error("This email is already registered. Please use a different email.");// Email validation error
             } else {
                 toast.error("Registration failed. Please try again.");
             }
