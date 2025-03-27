@@ -2,12 +2,14 @@ const express = require("express");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const { protect } = require("../middleware/authMiddleware");
-const { exists } = require("../models/User");
+const User = require("../models/User");
 
 const router = express.Router();
 
 // Helper function to get a cart by user ID or guest ID
 const getCart = async (userId, guestId) => {
+
+
     if (userId) {
         return await Cart.findOne({ user: userId });
     } else if (guestId) {
@@ -242,5 +244,9 @@ router.post("/merge", protect, async (req, res) => {
         res.status(500).json({message: "Server Error"})
     }     
 });
+
+
+
+
 
 module.exports = router;

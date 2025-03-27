@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Swal from 'sweetalert2';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const FinanceManagement = () => {
@@ -10,29 +11,89 @@ const FinanceManagement = () => {
     const [loading, setLoading] = useState(true);
     const [totalRevenue, setTotalRevenue] = useState(0);
     const [dateRange, setDateRange] = useState('all');
+    const [chartData, setChartData] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchTransactions();
     }, [dateRange]);
 
+    useEffect(() => {
+        // Update chart data when transactions change
+        processChartData();
+    }, [transactions]);
+
+    const processChartData = () => {
+        const filteredTransactions = filterTransactionsByDateRange(transactions);
+        const aggregatedData = aggregateDataByDate(filteredTransactions);
+        setChartData(aggregatedData);
+    }
+
+    const filterTransactionsByDateRange = (transactions) => {
+        const now = new Date();
+        return transactions.filter((transaction) => {
+            const transactionDate = new Date(transaction.date);
+            switch (dateRange) {
+                case 'week':
+                    const lastWeek = new Date();
+                    lastWeek.setDate(now.getDate() - 7);
+                    return transactionDate >= lastWeek;
+                case 'month':
+                    const lastMonth = new Date();
+                    lastMonth.setMonth(now.getMonth() - 1);
+                    return transactionDate >= lastMonth;
+                case 'year':
+                    const lastYear = new Date();
+                    lastYear.setFullYear(now.getFullYear() - 1);
+                    return transactionDate >= lastYear;
+                default:
+                    return true; // 'all' or no range selected, include all
+            }
+        });
+    };
+
+    const aggregateDataByDate = (transactions) => {
+        const aggregated = transactions.reduce((acc, transaction) => {
+            const date = transaction.date; 
+            const amount = transaction.amount;
+            if (!acc[date]) {
+                acc[date] = { date, amount: 0 };
+            }
+            acc[date].amount += amount;
+            return acc;
+        }, {});
+
+        return Object.values(aggregated).map((data) => ({
+            date: data.date,
+            amount: data.amount
+        }));
+    };
+
     const fetchTransactions = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/orders`);
-            const orders = response.data.map(order => ({
-                id: order._id,
+            const token = localStorage.getItem('token'); 
+            if (!token) throw new Error("No authentication token found");
+
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/checkout`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            const checkoutorders = response.data.map(checkOut => ({
+                id: checkOut._id,
                 user: { 
-                    name: order.user?.name || 'Anonymous',
-                    image: order.user?.image || null // Handle null image
+                    name: checkOut.user?.name || 'Anonymous',
+                    image: checkOut.user?.image || null // Handle null image
                 },
-                amount: order.totalPrice || 0,
-                status: order.paymentStatus || 'pending',
-                date: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : '-',
-                paymentMethod: order.paymentMethod || '-',
-                paidAt: order.paidAt || null
+                amount: checkOut.totalPrice || 0,
+                status: checkOut.paymentStatus || 'pending',
+                date: checkOut.createdAt ? new Date(checkOut.createdAt).toISOString().split('T')[0] : '-',
+                paymentMethod: checkOut.paymentMethod || '-',
+                paidAt: checkOut.paidAt || null
             }));
 
-            setTransactions(orders);
-            calculateTotalRevenue(orders);
+            setTransactions(checkoutorders);
+            calculateTotalRevenue(checkoutorders);
             setLoading(false);
         } catch (error) {
             console.error('Error:', error);
@@ -48,18 +109,85 @@ const FinanceManagement = () => {
         setTotalRevenue(total);
     };
 
+    // Filtered and Searched Transactions
+    const filteredAndSearchedTransactions = useMemo(() => {
+        // First filter by date range
+        const filteredByDateRange = filterTransactionsByDateRange(transactions);
+
+        // Then filter by search term
+        return filteredByDateRange.filter(transaction => 
+            Object.values(transaction).some(value => 
+                String(value).toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            transaction.user.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [transactions, dateRange, searchTerm]);
+
+    const handleDeleteTransaction = async (transactionId) => {
+        // Show SweetAlert confirmation dialog
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this transaction deletion!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        // If user confirms deletion
+        if (result.isConfirmed) {
+            try {
+                const token = localStorage.getItem('token'); 
+                if (!token) {
+                    toast.error('Authentication token missing. Please log in again.');
+                    return;
+                }
+        
+                // Make the DELETE request to the backend
+                await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/checkout/${transactionId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+        
+                // Remove the deleted transaction from the state
+                setTransactions(prev => prev.filter(transaction => transaction.id !== transactionId));
+        
+                // Show success message with SweetAlert
+                Swal.fire(
+                    'Deleted!',
+                    'The transaction has been deleted.',
+                    'success'
+                );
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Show error message with SweetAlert
+                Swal.fire(
+                    'Error!',
+                    'Failed to delete transaction.',
+                    'error'
+                );
+            }
+        }
+    };
+
     const handleStatusChange = async (transactionId, newStatus) => {
         try {
-            await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/checkout/${transactionId}/pay`, 
-                { paymentStatus: newStatus }
-            );
-
-            setTransactions(prev =>
-                prev.map(transaction =>
-                    transaction.id === transactionId
-                        ? { ...transaction, status: newStatus }
-                        : transaction
-                )
+            const token = localStorage.getItem('token'); 
+    
+            if (!token) {
+                toast.error('Authentication token missing. Please log in again.');
+                return;
+            }
+    
+            await axios.put(
+                `${import.meta.env.VITE_BACKEND_URL}/api/admin/checkout/${transactionId}`,
+                { paymentStatus: newStatus },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}` 
+                    }
+                }
             );
 
             toast.success(`Transaction status updated to ${newStatus}`);
@@ -89,7 +217,7 @@ const FinanceManagement = () => {
             'Payment Method'
         ];
 
-        const rows = transactions.map(t => [
+        const rows = filteredAndSearchedTransactions.map(t => [
             t.id,
             t.user.name,
             t.amount.toFixed(2),
@@ -137,6 +265,14 @@ const FinanceManagement = () => {
                     <option value="month">Last Month</option>
                     <option value="year">Last Year</option>
                 </select>
+
+                <input 
+                    type="text"
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="border rounded px-4 py-2 flex-grow"
+                />
             </div>
 
             <div className="bg-white p-6 rounded shadow-md mb-6">
@@ -157,7 +293,6 @@ const FinanceManagement = () => {
                     <thead>
                         <tr className="bg-gray-100">
                             <th className="px-6 py-3 border-b">ID</th>
-                            <th className="px-6 py-3 border-b">Customer</th>
                             <th className="px-6 py-3 border-b">Amount</th>
                             <th className="px-6 py-3 border-b">Status</th>
                             <th className="px-6 py-3 border-b">Date</th>
@@ -166,49 +301,40 @@ const FinanceManagement = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {transactions.map((transaction) => (
+                        {filteredAndSearchedTransactions.map((transaction) => (
                             <tr key={transaction.id}>
                                 <td className="px-6 py-4 border-b">{transaction.id}</td>
-                                <td className="px-6 py-4 border-b flex items-center gap-2">
-                                    {transaction.user.image && (
-                                        <img 
-                                            src={transaction.user.image} 
-                                            alt={transaction.user.name}
-                                            className="w-8 h-8 rounded-full object-cover"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = '/default-avatar.png'; // Provide a default image
-                                            }}
-                                        />
-                                    )}
-                                    <span>{transaction.user.name}</span>
-                                </td>
                                 <td className="px-6 py-4 border-b">${transaction.amount}</td>
                                 <td className="px-6 py-4 border-b">
-                                    <span className={`px-2 py-1 rounded ${
-                                        transaction.status === 'paid' 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-yellow-100 text-yellow-800'
-                                    }`}>
-                                        {transaction.status}
-                                    </span>
+                                    <select 
+                                        value={transaction.status}
+                                        onChange={(e) => handleStatusChange(transaction.id, e.target.value)}
+                                        className="border rounded px-2 py-1"
+                                    >
+                                        <option value="paid">Paid</option>
+                                        <option value="unpaid">Unpaid</option>
+                                    </select>
                                 </td>
                                 <td className="px-6 py-4 border-b">{transaction.date}</td>
                                 <td className="px-6 py-4 border-b">{transaction.paymentMethod}</td>
                                 <td className="px-6 py-4 border-b">
-                                    {transaction.status !== 'paid' && (
-                                        <button 
-                                            onClick={() => handleStatusChange(transaction.id, 'paid')}
-                                            className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                                        >
-                                            Mark as Paid
-                                        </button>
-                                    )}
+                                    <button 
+                                        onClick={() => handleDeleteTransaction(transaction.id)}
+                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                                    >
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+
+                {filteredAndSearchedTransactions.length === 0 && (
+                    <div className="text-center py-4 text-gray-500">
+                        No transactions found matching your search.
+                    </div>
+                )}
             </div>
         </div>
     );

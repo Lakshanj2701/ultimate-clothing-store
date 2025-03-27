@@ -14,8 +14,11 @@ const adminOrderRoutes = require("./routes/adminOrderRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const checkOutRoutes = require("./routes/checkOutRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+
 const advertismentRoutes = require("./routes/advertismentRoutes");
 
+
+const adminCheckoutRoutes = require("./routes/admincheckOutRoutes");
 const app = express();
 
 dotenv.config();
@@ -49,6 +52,9 @@ app.use("/api/admin/users", adminRoutes);
 app.use("/api/admin/products", productAdminRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/advertisements", advertismentRoutes);
+
+app.use("/api/admin/checkout", adminCheckoutRoutes);
+
 
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
