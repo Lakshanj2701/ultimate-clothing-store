@@ -96,7 +96,7 @@ router.post('/create' , protect , async (req , res) => {
         shippingAddress,
         paymentMethod,
         totalPrice,
-        isPaid: false, // Initially set to false
+        isPaid: false, 
     });
 
     // Save the checkout to the database
@@ -113,19 +113,19 @@ router.post('/create', protect, async (req, res) => {
     const { userId, shippingAddress, paymentMethod } = req.body;
 
     try {
-      // 1. Ensure the user exists
+      // Check the user exists
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
   
-      // 2. Create an empty checkoutItems array (no products for this test case)
+      // Create an empty checkoutItems array 
       const checkoutItems = []; // No products
   
-      // 3. Calculate totalPrice (in this case, it will be 0 since there are no products)
+      // Calculate totalPrice 
       const totalPrice = 0;
   
-      // 4. Create a new Checkout entry with no products
+      // Create a new Checkout entry with no products
       const newCheckout = new checkOut({
         user: userId,
         checkoutItems, 
@@ -134,7 +134,7 @@ router.post('/create', protect, async (req, res) => {
         totalPrice, 
       });
   
-      // 5. Save checkout entry to the database
+      // Save checkout entry to the database
       await newCheckout.save();
   
       res.status(201).json({
