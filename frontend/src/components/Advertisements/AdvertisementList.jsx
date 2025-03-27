@@ -5,6 +5,8 @@ import { adService } from '../../services/api';
 const AdvertisementList = ({ onEdit, onDelete }) => {
   const [advertisements, setAdvertisements] = useState([]);
 
+
+  //fetching ad
   useEffect(() => {
     const fetchAdvertisements = async () => {
       try {

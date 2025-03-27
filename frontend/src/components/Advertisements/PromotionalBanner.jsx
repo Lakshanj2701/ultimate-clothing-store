@@ -8,7 +8,7 @@ const PromotionalBanner = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="text-center md:text-left mb-2 md:mb-0">
-            <span className="font-bold">LIMITED TIME OFFER:</span> Use code <span className="font-bold">ULTIMATE25</span> for 25% off your purchase!
+            <span className="font-bold">LIMITED TIME OFFER:</span>  <span className="font-bold">ULTIMATE25</span> for 25% off your purchase!
           </div>
           <Link 
             to="/collections/sale" 

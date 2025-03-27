@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adService } from '../../services/api';
 
+//store form data
 const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onCancelEdit }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -27,6 +28,7 @@ const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onC
       return;
     }
 
+    //send to the backend
     const adData = {
       title,
       description,
