@@ -20,11 +20,13 @@ const Register = () => {
         setIsLoading(true);
 
         try {
+            // Send user registration data to backend API
             const response = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/users/register`, 
                 { name, email, password }
             );
 
+            // If registration is successful, show a success message and redirect
             if (response.status === 201) {
                 toast.success("Registration successful! Redirecting to login...");
                 setTimeout(() => navigate('/login'), 3000); // Redirect after 3 seconds

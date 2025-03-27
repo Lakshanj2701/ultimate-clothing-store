@@ -60,7 +60,7 @@ router.put("/:id", protect, admin, async (req, res) => {
       user.role = req.body.role || user.role;
 
       const updatedUser = await user.save();
-      res.json({ message: "User updated successfully", user: updatedUser }); // ✅ Fixed response syntax
+      res.json({ message: "User updated successfully", user: updatedUser }); //  Fixed response syntax
     } 
   } catch (error) {
     res.status(500).json({ message: "Server Error" });

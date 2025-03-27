@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const UserManagement = () => {
+    // State to store users and form data
     const [users, setUsers] = useState([]);
     const [formData, setFormData] = useState({
         name: "",
@@ -14,18 +15,20 @@ const UserManagement = () => {
         fetchUsers();
     }, []);
 
+    // Function to retrieve user data from the backend
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('token');
             const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setUsers(response.data);
+            setUsers(response.data); // Update state with fetched users
         } catch (error) {
             console.error("Error fetching users:", error);
         }
     };
 
+    // Function to handle adding a new user
     const handleAddUser = async (e) => {
         e.preventDefault();
         try {
@@ -34,12 +37,13 @@ const UserManagement = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setUsers([...users, response.data.user]);
-            setFormData({ name: "", email: "", password: "", role: "customer" });
+            setFormData({ name: "", email: "", password: "", role: "customer" });// Reset form fields
         } catch (error) {
             console.error("Error adding user:", error);
         }
     };
 
+    // Function to delete a user
     const handleDeleteUser = async (userId) => {
         if (window.confirm("Are you sure you want to delete this user?")) {
             try {
@@ -54,6 +58,7 @@ const UserManagement = () => {
         }
     };
 
+    // Handle form input changes
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -61,6 +66,7 @@ const UserManagement = () => {
         });
     };
 
+    // Function to update user role
     const handleRoleChange = async (userId, newRole) => {
         try {
             const token = localStorage.getItem('token');

@@ -11,13 +11,15 @@ const Login = () => {
     
     const navigate = useNavigate();
 
+    // Handle form submission for login
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
         console.log("hirrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
         try {
-            console.log("hirrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+            console.log("hirrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
+            // Send login request to backend
             const response = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/users/login`, 
                 { email, password }
@@ -29,7 +31,7 @@ const Login = () => {
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
             
-            // Check if user is admin and redirect accordingly
+            // Redirect users based on their role
             if (user.role === 'admin') {
                 // Redirect to admin dashboard
                 navigate('/admin');
