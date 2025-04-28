@@ -1,114 +1,142 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {FaFilter} from "react-icons/fa";
+import { FaFilter } from "react-icons/fa";
+import axios from 'axios';
 import FilterSidebar from '../components/Products/FilterSidebar';
 import SortOptions from '../components/Products/SortOptions';
 import ProductGrid from '../components/Products/ProductGrid';
+import { useSearchParams } from 'react-router-dom';
 
 const CollectionPage = () => {
-
-    const[products, setProducts] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const sidebarRef = useRef(null);
-    const[isSidebarOpen, setIsSidebarOpen] = useState([false]);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [filters, setFilters] = useState({
+        collection: searchParams.get('collection') || 'all',
+        size: searchParams.get('size') || '',
+        color: searchParams.get('color') || '',
+        gender: searchParams.get('gender') || '',
+        minPrice: searchParams.get('minPrice') || '',
+        maxPrice: searchParams.get('maxPrice') || '',
+        category: searchParams.get('category') || '',
+        material: searchParams.get('material') || '',
+        brand: searchParams.get('brand') || '',
+        sortBy: searchParams.get('sortBy') || 'newest'
+    });
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
     const handleClickOutside = (e) => {
-        //close sidebar if click outside
-        if(sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+        if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
             setIsSidebarOpen(false);
         }
     };
 
-    useEffect(() => {
-        //Event listner for click
-        document.addEventListener("mousedown", handleClickOutside);
-        //clean event listner
-        return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-        };
-    },[]);
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const queryParams = new URLSearchParams();
+            
+            // Add all non-empty filters to query params
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value && value !== 'all') {
+                    queryParams.append(key, value);
+                }
+            });
+
+            const response = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/api/products?${queryParams.toString()}`
+            );
+            
+            setProducts(response.data);
+            setError(null);
+        } catch (err) {
+            setError('Failed to fetch products. Please try again later.');
+            console.error('Error fetching products:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFilterChange = (newFilters) => {
+        setFilters(prev => ({ ...prev, ...newFilters }));
+        // Update URL search params
+        const newSearchParams = new URLSearchParams();
+        Object.entries({ ...filters, ...newFilters }).forEach(([key, value]) => {
+            if (value && value !== 'all') {
+                newSearchParams.append(key, value);
+            }
+        });
+        setSearchParams(newSearchParams);
+    };
 
     useEffect(() => {
-        setTimeout(() => {
-            const fetchedProducts = [
-                {
-                  _id: 1,
-                  name: "Product 1",
-                  price: 100,
-                  images: [{url: "https://picsum.photos/500/500?random=7"}],
-                },
-                {
-                  _id: 2,
-                  name: "Product 2",
-                  price: 100,
-                  images: [{url: "https://picsum.photos/500/500?random=3"}],
-                },
-                {
-                  _id: 3,
-                  name: "Product 3",
-                  price: 100,
-                  images: [{url: "https://picsum.photos/500/500?random=4"}],
-                },
-                {
-                  _id: 4,
-                  name: "Product 4",
-                  price: 100,
-                  images: [{url: "https://picsum.photos/500/500?random=5"}],
-                },
-                {
-                  _id: 5,
-                  name: "Product 5",
-                  price: 100,
-                  images: [{url: "https://picsum.photos/500/500?random=8"}],
-                },
-                {
-                  _id: 6,
-                  name: "Product 6",
-                  price: 100,
-                  images: [{url: "https://picsum.photos/500/500?random=9"}],
-                },
-                {
-                  _id: 7,
-                  name: "Product 7",
-                  price: 100,
-                  images: [{url: "https://picsum.photos/500/500?random=10"}],
-                },
-                {
-                  _id: 8,
-                  name: "Product 8",
-                  price: 100,
-                  images: [{url: "https://picsum.photos/500/500?random=11"}],
-                },
-              
-              ];setProducts(fetchedProducts);
-        }, 1000);
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
     }, []);
 
-  return (
-    <div className="flex flex-col lg:flex-row">
-        {/*Mobile filter button*/}
-        <button onClick={toggleSidebar}
-         className="lg:hidden border p-2 flex justify-center items-center">
-            <FaFilter className="mr-2"/> Filters
-        </button>
-        {/**Filter SideBar */}
-        <div ref={sidebarRef} className={`${isSidebarOpen ? "translate-x-0": "-translate-x-full"} fixed inset-y-0 z-50
-        left-0 w-64 bg-white overflow-y-auto transition-transform duration-300 lg:static lg:translate-x-0`}>
-            <FilterSidebar/>
-        </div>
-        <div className="flex-glow p-4 ">
-            <h2 className="text-2xl uppercase mb-4">All Collection</h2>
+    useEffect(() => {
+        fetchProducts();
+    }, [filters]);
 
-            {/**Sort option */}
-            <SortOptions />
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
-            {/**Product grid */}
-            <ProductGrid products={products}/>
+    if (error) {
+        return (
+            <div className="text-center p-4 bg-red-50 text-red-600 rounded-lg">
+                {error}
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col lg:flex-row">
+            {/* Mobile filter button */}
+            <button 
+                onClick={toggleSidebar}
+                className="lg:hidden border p-2 flex justify-center items-center"
+            >
+                <FaFilter className="mr-2"/> Filters
+            </button>
+
+            {/* Filter SideBar */}
+            <div 
+                ref={sidebarRef} 
+                className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 z-50
+                left-0 w-64 bg-white overflow-y-auto transition-transform duration-300 lg:static lg:translate-x-0`}
+            >
+                <FilterSidebar 
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                />
+            </div>
+
+            <div className="flex-grow p-4">
+                <h2 className="text-2xl uppercase mb-4">All Collection</h2>
+
+                {/* Sort option */}
+                <SortOptions 
+                    currentSort={filters.sortBy}
+                    onSortChange={(sortBy) => handleFilterChange({ sortBy })}
+                />
+
+                {/* Product grid */}
+                <ProductGrid products={products} />
+            </div>
         </div>
-    </div>
-  );
+    );
 };
 
 export default CollectionPage;
