@@ -3,6 +3,8 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { protect } = require("../middleware/authMiddleware");
+const crypto = require("crypto");
+const transporter = require("../config/transporter");
 
 const router = express.Router();
 
@@ -55,18 +57,26 @@ router.post("/register", async (req, res) => {
 // @desc Authenticate user
 // @access Public
 router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-    console.log('hittttttttttttttttttttttttttttttttttttttttttt' , email)
-    try {
-      // Find the user by email
-      let user = await User.findOne({ email });
-
-      if (!user) return res.status(400).json({ message: "Invalid Credentials" });
-      const isMatch = await user.matchPassword(password);
+  const { email, password } = req.body;
   
-      if (!isMatch) {
-        return res.status(400).json({ message: "Invalid Credentials" });
-      }
+  try {
+    console.log(`Login attempt for: ${email}`);
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      console.log('User not found');
+      return res.status(400).json({ message: "Invalid Credentials" });
+    }
+
+    console.log('User found:', user.email);
+    console.log('Stored password hash:', user.password);
+    
+    const isMatch = await user.matchPassword(password);
+    console.log(`Password match result: ${isMatch}`);
+    
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid Credentials" });
+    }
 
        // Create JWT Payload
         const payload = { user: { id: user._id, role: user.role } };
@@ -92,10 +102,10 @@ router.post("/login", async (req, res) => {
             }
         );
         
-    } catch (error) { 
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }
+      } catch (error) {
+        console.error("Login error details:", error);
+        res.status(500).json({ message: "Server Error", error: error.message });
+      }
   });
   
   // @route GET /api/users/profile
@@ -105,10 +115,90 @@ router.post("/login", async (req, res) => {
     res.json(req.user);
     });
 
+    // @route POST /api/users/forgot-password
+// @desc Request password reset
+// @access Public
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
 
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
+    // Generate reset token
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
 
+    // Save token and expiry to user
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+    await user.save();
 
+    // Create reset URL
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
 
+    // Send email
+    const mailOptions = {
+      to: user.email,
+      from: 'sathiradissanayaka80@gmail.com',
+      subject: 'Password Reset',
+      text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+        Please click on the following link, or paste this into your browser to complete the process:\n\n
+        ${resetUrl}\n\n
+        If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: "Password reset link sent to email" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// @route POST /api/users/reset-password/:token
+// @desc Reset password
+// @access Public
+router.post("/reset-password/:token", async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Password reset token is invalid or has expired" });
+    }
+
+    // Set new password - let the pre-save hook handle hashing
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    
+    // Save the user - this will trigger the pre-save hook
+    await user.save();
+
+    // Send confirmation email
+    const mailOptions = {
+      to: user.email,
+      from: process.env.EMAIL_USER,
+      subject: 'Your password has been changed',
+      text: `This is a confirmation that the password for your account ${user.email} has just been changed.\n`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password reset error:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+});
 
 module.exports = router;

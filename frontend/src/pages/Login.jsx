@@ -2,22 +2,23 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import login from "../assets/login.webp";
 import axios from 'axios';
+import { toast } from 'sonner';
+import { useCart } from '../components/Cart/CartContext';
 
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    
+    const { mergeCarts } = useCart();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
-        console.log("hirrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+        
         try {
-            console.log("hirrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
             const response = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/users/login`, 
                 { email, password }
@@ -25,24 +26,33 @@ const Login = () => {
             
             const { user, token } = response.data;
             
-            // Store token and user data in localStorage
+            // Store token and user data
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
             
-            // Check if user is admin and redirect accordingly
+            // Merge guest cart with user cart after login
+            const guestId = localStorage.getItem('guestId');
+            if (guestId) {
+                await mergeCarts(guestId);
+            }
+            
+            // Show success message
+            toast.success(`Welcome back, ${user.name}!`);
+            
+            // Redirect based on role
             if (user.role === 'admin') {
-                // Redirect to admin dashboard
                 navigate('/admin');
             } else {
-                // Redirect regular users to homepage
                 navigate('/');
             }
             
         } catch (error) {
+            console.error('Login error:', error);
             setError(
                 error.response?.data?.message || 
                 "Login failed. Please check your credentials."
             );
+            toast.error("Login failed. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -102,6 +112,12 @@ const Login = () => {
                             Register
                         </Link>
                     </p>
+                    <p className="mt-4 text-center text-sm">
+  Forgot your password?{" "}
+  <Link to="/forgot-password" className="text-blue-500">
+    Reset it here
+  </Link>
+</p>
                 </form>
             </div>
 

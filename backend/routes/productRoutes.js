@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 const Product = require("../models/Product");
+const Review = require("../models/Review");
 const { protect, admin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -23,6 +24,26 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+// Helper function to parse array fields
+const parseArrayField = (fieldValue) => {
+  if (!fieldValue) return [];
+  
+  try {
+    // If it's already an array, return it
+    if (Array.isArray(fieldValue)) return fieldValue;
+    
+    // If it's a JSON string, parse it
+    const parsed = JSON.parse(fieldValue);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch (e) {
+    // If it's a comma-separated string, split it
+    if (typeof fieldValue === 'string') {
+      return fieldValue.split(',').map(item => item.trim()).filter(item => item);
+    }
+    return [fieldValue];
+  }
+};
 
 // @route POST /api/products
 // @desc Create a new Product with Image Upload
@@ -50,6 +71,17 @@ router.post("/", protect, admin, upload.array("images", 5), async (req, res) => 
       sku,
     } = req.body;
 
+    // Validate category
+    const validCategories = ["Men", "Women", "Unisex", "Electronics", "Accessories", "Home", "Sports", "Custom"];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({ message: "Invalid category. Please select a valid category." });
+    }
+
+    // Parse array fields
+    const parsedSizes = parseArrayField(sizes);
+    const parsedColors = parseArrayField(colors);
+    const parsedTags = parseArrayField(tags);
+
     // Map uploaded image files to URLs
     const images = req.files.map(file => ({ url: `/uploads/${file.filename}` }));
 
@@ -61,15 +93,15 @@ router.post("/", protect, admin, upload.array("images", 5), async (req, res) => 
       countInStock,
       category,
       brand,
-      sizes,
-      colors,
+      sizes: parsedSizes,
+      colors: parsedColors,
       collections,
       material,
       gender,
-      images, // Store image URLs
-      isFeatured,
-      isPublished,
-      tags,
+      images,
+      isFeatured: isFeatured === 'true' || isFeatured === true,
+      isPublished: isPublished === 'true' || isPublished === true,
+      tags: parsedTags,
       dimensions,
       weight,
       sku,
@@ -79,6 +111,17 @@ router.post("/", protect, admin, upload.array("images", 5), async (req, res) => 
     res.status(201).json(createdProduct);
   } catch (error) {
     console.error("Error creating product:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// productRoutes.js
+router.get("/custom", async (req, res) => {
+  try {
+    const customProducts = await Product.find({ category: "Custom" });
+    res.json(customProducts);
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -299,23 +342,29 @@ router.put("/:id", protect, admin, async (req, res) => {
 
 
 
-  // @route GET /api/products/:id
-  // @desc Get a single product by ID
-  // @access Public
-  router.get("/:id", async (req, res) => {
-    try {
-      const product = await Product.findById(req.params.id);
+// @route GET /api/products/:id
+// @desc Get a single product by ID with reviews
+// @access Public
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    const reviews = await Review.find({ product: req.params.id })
+      .populate("user", "name")
+      .sort("-createdAt");
 
-      if (product) {
-        res.json(product);
-      } else {
-        res.status(404).json({ message: "Product Not Found" });
-      }
-    } catch (error) {
-      console.error("Error fetching product:", error);
-      res.status(500).json({ message: "Server Error" });
+    if (product) {
+      res.json({
+        ...product._doc,
+        reviews,
+      });
+    } else {
+      res.status(404).json({ message: "Product Not Found" });
     }
-  });
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
 
 
   // @route GET /api/products/similar/:id
@@ -342,8 +391,5 @@ router.put("/:id", protect, admin, async (req, res) => {
       res.status(500).json({ message: "Server error" });
     }
   });
-      
-  
-
 
 module.exports = router;

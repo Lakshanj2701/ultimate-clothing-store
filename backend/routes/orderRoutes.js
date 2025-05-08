@@ -10,10 +10,7 @@ const router = express.Router();
 router.get("/my-orders", protect, async (req, res) => {
   try {
     // Find orders for the authenticated user
-    const orders = await Order.find({ user: req.user._id }).sort({
-      createdAt: -1, 
-    });// Sort by most recent orders
-
+    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }); // Sort by most recent orders
     res.json(orders);
   } catch (error) {
     console.error(error);
@@ -23,20 +20,21 @@ router.get("/my-orders", protect, async (req, res) => {
 
 
 // @route GET /api/orders/:id
-// @desc Get order details by ID
+// @desc Get order details by order ID
 // @access Private
 router.get("/:id", protect, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate("user", "name email");
+    const order = await Order.findById(req.params.id)
+      .populate("orderItems.productId") // Populate product data
+      .exec();
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Return the full order details
     res.json(order);
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching order:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });

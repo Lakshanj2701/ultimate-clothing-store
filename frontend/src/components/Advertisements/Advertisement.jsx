@@ -1,23 +1,30 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Advertisement = ({ title, description, linkTo, discount, bgColor = "bg-indigo-600", onImageChange, isAdmin = false }) => {
-  const [imageFile, setImageFile] = useState(null);
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(URL.createObjectURL(file)); // Preview the image
-      if (onImageChange) onImageChange(file); // Notify parent component if needed
-    }
-  };
+const Advertisement = ({ 
+  title, 
+  description, 
+  linkTo, 
+  discount, 
+  bgColor = "bg-indigo-600", 
+  imageUrl,
+  isAdmin = false 
+}) => {
+  // Construct the full image URL based on your backend configuration
+  const fullImageUrl = imageUrl 
+    ? `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:9000'}${imageUrl}`
+    : null;
 
   return (
     <div className={`${bgColor} text-white rounded-lg shadow-lg p-6 mb-8`}>
       <div className="flex flex-col md:flex-row items-center">
-        {imageFile && (
+        {fullImageUrl && (
           <div className="w-full md:w-1/3 mb-4 md:mb-0 md:mr-6">
-            <img src={imageFile} alt={title} className="rounded-md w-full h-auto object-cover" />
+            <img 
+              src={fullImageUrl} 
+              alt={title} 
+              className="rounded-md w-full h-auto object-cover" 
+            />
           </div>
         )}
         <div className="w-full md:w-2/3">
@@ -34,16 +41,6 @@ const Advertisement = ({ title, description, linkTo, discount, bgColor = "bg-ind
           >
             Shop Now
           </Link>
-
-          {/* Conditionally render image upload input only for Admin */}
-          {isAdmin && (
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleImageChange}
-              className="mt-4 text-black"
-            />
-          )}
         </div>
       </div>
     </div>

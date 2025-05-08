@@ -1,6 +1,8 @@
 const express = require("express");
 const checkOut = require("../models/Checkout");
 const products = require("../models/Product");
+const Order = require("../models/Order");
+const mongoose = require("mongoose"); 
 const { protect, admin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -10,14 +12,24 @@ const router = express.Router();
 // @access  Private/Admin
 router.get("/", protect, admin, async (req, res) => {
   try {
-    const checkorders = await checkOut.find({}).populate("user", "name email"); 
-    res.json(checkorders);
+    const checkorders = await checkOut.find({})
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+    
+    // Map the results to include full image URLs
+    const ordersWithImageUrls = checkorders.map(order => ({
+      ...order._doc,
+      bankTransferProof: order.bankTransferProof 
+        ? `${req.protocol}://${req.get('host')}${order.bankTransferProof}`
+        : null
+    }));
+
+    res.json(ordersWithImageUrls);
   } catch (error) {
-    console.error("Error fetching orders:", error); 
+    console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
-
 
 
 // @route   PUT /api/admin/orders/:id
@@ -26,20 +38,52 @@ router.get("/", protect, admin, async (req, res) => {
 
 router.put("/:id", protect, admin, async (req, res) => {
   try {
-      const checkorders = await checkOut.findById(req.params.id);
-
-      if (checkorders) {
-        checkorders.paymentStatus = req.body.paymentStatus; // Set new payment status
-        checkorders.paidAt = req.body.paymentStatus === "paid" ? Date.now() : null; // Set paidAt if paid
-
-          const updatedOrder = await checkorders.save();
-          res.json(updatedOrder);
-      } else {
-          res.status(404).json({ message: "Checkout not found" });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      // 1. Update the Checkout payment status
+      const checkorders = await checkOut.findById(req.params.id).session(session);
+      
+      if (!checkorders) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ message: "Checkout not found" });
       }
+
+      checkorders.paymentStatus = req.body.paymentStatus;
+      checkorders.paidAt = req.body.paymentStatus === "paid" ? Date.now() : null;
+
+      const updatedCheckout = await checkorders.save({ session });
+
+      // 2. Find and update all related Orders
+      await Order.updateMany(
+        { 
+          user: checkorders.user,
+          paymentStatus: { $ne: req.body.paymentStatus } // Only update if status is different
+        },
+        { 
+          $set: { 
+            paymentStatus: req.body.paymentStatus,
+            isPaid: req.body.paymentStatus === "paid",
+            paidAt: req.body.paymentStatus === "paid" ? Date.now() : null
+          } 
+        },
+        { session }
+      );
+
+      await session.commitTransaction();
+      session.endSession();
+      
+      res.json(updatedCheckout);
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   } catch (error) {
-      console.error( error); 
-      res.status(500).json({ message: "Server error" });
+    console.error("Error updating Checkout payment status:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

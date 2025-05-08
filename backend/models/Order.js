@@ -26,6 +26,8 @@ const orderItemSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    description: String,
+    customImage: String,
 },
     {_id: false}
 );

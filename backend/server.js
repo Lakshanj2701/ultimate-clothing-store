@@ -14,8 +14,11 @@ const adminOrderRoutes = require("./routes/adminOrderRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const checkOutRoutes = require("./routes/checkOutRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 const advertismentRoutes = require("./routes/advertismentRoutes");
+const returnRefundUserRoutes = require("./routes/userReturnRefundRoutes");
+const returnRefundAdminRoutes = require("./routes/adminReturnRefundRoutes");
 
 
 const adminCheckoutRoutes = require("./routes/admincheckOutRoutes");
@@ -40,13 +43,15 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/users", userRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/products", productRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api", subscribeRoute);
 app.use("/api/cart", cartRoutes);
 app.use("/api/checkout", checkOutRoutes);
 app.use("/api/orders", orderRoutes);
-
+app.use("/api/return-refund", returnRefundUserRoutes);  // User routes
+app.use("/api/admin/return-refund", returnRefundAdminRoutes);  // Admin routes
 // Admin Routes
 app.use("/api/admin/users", adminRoutes);
 app.use("/api/admin/products", productAdminRoutes);
