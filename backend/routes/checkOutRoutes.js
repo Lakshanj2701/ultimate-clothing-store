@@ -4,125 +4,204 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
 const User = require("../models/User");
+const multer = require("multer");
 const { protect } = require("../middleware/authMiddleware");
+const path = require("path");
+const fs = require("fs");
 
-const router = express.Router(); 
+const router = express.Router();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = path.join(__dirname, "../uploads/bank_transfers");
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      "bank-transfer-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only JPEG, PNG and GIF are allowed."));
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB file size limit
+  },
+});
 
 // @route POST /api/checkout
 // @desc Create a new checkout session
 // @access Private
-router.post("/", protect, async (req, res) => {
-    const { checkoutItems, shippingAddress, paymentMethod, totalPrice } = 
-    req.body;
+router.post("/", protect, upload.single("bankTransferProof"), async (req, res) => {
+  try {
+    // Parse the JSON strings from form data
+    const checkoutItems = JSON.parse(req.body.checkoutItems);
+    const shippingAddress = JSON.parse(req.body.shippingAddress);
+    const { paymentMethod, totalPrice } = req.body;
 
-    // Check if checkoutItems exist and are valid
     if (!checkoutItems || checkoutItems.length === 0) {
-        return res.status(400).json({ message: "No items in checkout" });
+      return res.status(400).json({ message: "No items in checkout" });
     }
+
+    const checkoutItemsWithDetails = checkoutItems.map((item) => {
+      return {
+        productId: item.productId,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+        description: item.description || "",
+        customImage: item.customImage || null // Include custom image
+      };
+    });
+
+    const calculatedTotalPrice = checkoutItemsWithDetails.reduce(
+      (acc, item) => acc + item.price * item.quantity,
+      0
+    );
+
+    const newCheckout = new Checkout({
+      user: req.user._id,
+      checkoutItems: checkoutItemsWithDetails,
+      shippingAddress,
+      paymentMethod,
+      totalPrice: calculatedTotalPrice,
+      paymentStatus: paymentMethod === "PayPal" ? "pending" : "unpaid",
+      bankTransferProof: paymentMethod === "BankTransfer" && req.file 
+        ? `/uploads/bank_transfers/${req.file.filename}`
+        : null,
+    });
+
+    const checkout = await newCheckout.save();
     
-    try {
-        //Create new checkOut session
-        const newCheckout = await Checkout.create({
-            user: req.user._id,
-            checkoutItems: checkoutItems,
-            shippingAddress,
-            paymentMethod,
-            totalPrice,
-            paymentDetails: "Pending",
-            isPaid: false,
-        });
-
-        console.log(`Checkout created for user: ${req.user._id}`);
-        res.status(201).json(newCheckout)
-    } catch (error) {
-        console.error("Error creating Checkout session:", error);
-        res.status(500).json({message: "Server Error"});
-    }
-
-   
+    res.status(201).json({
+      data: {
+        _id: checkout._id,
+        ...checkout._doc
+      }
+    });
+  } catch (error) {
+    console.error("Error creating Checkout session:", error);
+    res.status(500).json({ 
+      message: "Server Error",
+      error: error.message 
+    });
+  }
 });
+  
+  
+  // @route GET /api/checkout/:id
+// @desc Get checkout details by ID
+// @access Private
+// This route should return the checkout based on ID
+router.get("/:id", protect, async (req, res) => {
+    try {
+      const checkout = await Checkout.findById(req.params.id).populate('checkoutItems.productId');
+      if (!checkout) {
+        return res.status(404).json({ message: "Checkout not found" });
+      }
+      res.json(checkout);
+    } catch (error) {
+      console.error("Error fetching checkout details:", error);
+      res.status(500).json({ message: "Server Error" });
+    }
+  });
+  
+  
+
 
 // @route PUT /api/checkout/:id/pay
 // @desc Update checkout to mark as paid after successful payment
 // @access Private
+// PUT /api/checkout/:id/pay - Update checkout status to paid
 router.put("/:id/pay", protect, async (req, res) => {
     const { paymentStatus, paymentDetails } = req.body;
-
+  
     try {
-        const checkout = await Checkout.findById(req.params.id);
-
-        if (!checkout) {
-            return res.status(404).json({ message: "Checkout not found" });
-        }
-
-        //  Ensure the payment status is valid
-        if (paymentStatus === "paid") {
-            checkout.isPaid = true;
-            checkout.paidAt = Date.now();
-            checkout.paymentStatus = "paid";
-            checkout.paymentDetails = paymentDetails;
-
-            await checkout.save();
-
-            res.status(200).json({ checkout });
-        } else {
-            res.status(400).json({ message: "Invalid payment status" });
-        }
+      const checkout = await Checkout.findById(req.params.id);
+      if (!checkout) {
+        return res.status(404).json({ message: "Checkout not found" });
+      }
+  
+      // If PayPal selected
+      if (paymentStatus === "paid") {
+        checkout.isPaid = true;
+        checkout.paidAt = Date.now();
+        checkout.paymentStatus = "paid";
+        checkout.paymentDetails = paymentDetails;
+      } else if (paymentStatus === "unpaid") {
+        // Cash on delivery or Bank Transfer
+        checkout.paymentStatus = "unpaid";
+      }
+  
+      await checkout.save();
+      res.status(200).json(checkout);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
+      console.error("Error updating Checkout payment status:", error);
+      res.status(500).json({ message: "Server Error" });
     }
-});
+  });
 
 // @route POST /api/checkout/:id/finalize
-// @desc finalize checkout and convert to an order after payment confirmation
+// @desc Finalize checkout and convert to an order after payment confirmation
 // @access Private
 router.post("/:id/finalize", protect, async (req, res) => {
-    try {
-        const checkout = await Checkout.findById(req.params.id);
-
-        if (!checkout) {
-            return res.status(404).json({ message: "Checkout not found" });
-        }
-
-        if (checkout.isPaid && !checkout.isFinalized) {
-
-            // Create final order based on the checkout details
-            const finalOrder = await Order.create({
-                user: checkout.user,
-                orderItems: checkout.checkoutItems,
-                shippingAddress: checkout.shippingAddress,
-                paymentMethod: checkout.paymentMethod,
-                totalPrice: checkout.totalPrice,
-                isPaid: true,
-                paidAt: checkout.paidAt,
-                isDelivered: false,
-                paymentStatus: "paid",
-                paymentDetails: checkout.paymentDetails,
-            });
-
-            // Mark the checkout as finalized
-            checkout.isFinalized = true;
-            checkout.finalizedAt = Date.now();
-            await checkout.save();
-
-            // Delete the cart associated with the user
-            await Cart.findOneAndDelete({ user: checkout.user });
-            res.status(201).json(finalOrder);
-        } else if (checkout.isFinalized) {
-            res.status(400).json({ message: "Checkout already finalized" });
-        } else {
-            res.status(400).json({ message: "Checkout is not paid" });
-        }
-        
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
+  try {
+    const checkout = await Checkout.findById(req.params.id);
+    if (!checkout || checkout.isFinalized) {
+      return res.status(400).json({ message: "Invalid checkout or already finalized" });
     }
+
+    // Create an order from the checkout details
+    const order = new Order({
+      user: checkout.user,
+      orderItems: checkout.checkoutItems.map(item => ({
+        productId: item.productId,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        description: item.description,
+        customImage: item.customImage // Include custom image in order
+      })),
+      shippingAddress: checkout.shippingAddress,
+      paymentMethod: checkout.paymentMethod,
+      totalPrice: checkout.totalPrice,
+      isPaid: checkout.isPaid,
+      paidAt: checkout.paidAt,
+      paymentStatus: checkout.paymentStatus,
+      status: "Processing",
+    });
+
+    const savedOrder = await order.save();
+    checkout.isFinalized = true;
+    checkout.finalizedAt = Date.now();
+    await checkout.save();
+
+    res.status(201).json(savedOrder);
+  } catch (error) {
+    console.error("Error finalizing checkout:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
 });
-
-
-
+  
 router.post('/create-checkout', protect, async (req, res) => {
     const { userId, shippingAddress, paymentMethod } = req.body;
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adService } from '../../services/api';
+import { adService } from '../../services/api2';
 
 const AddAdvertisementForm = ({ onAddAdvertisement, editingAd, editingIndex, onCancelEdit }) => {
   const [title, setTitle] = useState('');

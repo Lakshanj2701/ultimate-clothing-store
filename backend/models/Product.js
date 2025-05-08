@@ -25,6 +25,12 @@ const productSchema = new mongoose.Schema({
   },
   category: {
     type: String,
+    enum: ["Men", "Women", "Unisex", "Electronics", "Accessories", "Home", "Sports", "Custom"], // Added predefined categories and a "Custom" option
+    default: "Custom", // Default to custom category if not provided
+  },
+  customDescription: {
+    type: String,
+    default: "", // Default is empty for products that aren't custom
   },
   brand: {
     type: String,
@@ -66,15 +72,15 @@ const productSchema = new mongoose.Schema({
     default: 0,
   },
   tags: [String],
-  metaTitle: {
-    type: String,
-  },
-  metaDescription: {
-    type: String,
-  },
-  metaKeywords: {
-    type: String,
-  },
+  // metaTitle: {
+  //   type: String,
+  // },
+  // metaDescription: {
+  //   type: String,
+  // },
+  // metaKeywords: {
+  //   type: String,
+  // },
   dimensions: {
     length: Number,
     width: Number,

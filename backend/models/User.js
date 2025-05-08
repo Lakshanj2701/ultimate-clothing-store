@@ -24,17 +24,25 @@ const userSchema = new mongoose.Schema({
     enum: ["customer", "admin"],
     default: "customer",
   },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
 },
     {timestamps: true}
 );
 
-// Password Hash middleware
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+  // Only hash if password is modified
+  if (!this.isModified("password")) return next();
+  
+  try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
-  });
+  } catch (err) {
+    console.error("Password hashing error:", err);
+    next(err);
+  }
+});
 
 // Match user-entered password to the hashed password
 userSchema.methods.matchPassword = async function (enteredPassword) {

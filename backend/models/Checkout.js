@@ -21,58 +21,64 @@ const checkoutItemSchema = new mongoose.Schema({
     quantity: {
         type: Number,
         required: true,
-    }
+    },
+    description: {
+        type: String, // Add description field
+        required: false,
+      },
+    customImage: String,
 
 },
   {_id: false}
 );
 
+// In checkout.js model
 const checkoutSchema = new mongoose.Schema({
     user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
     checkoutItems: [checkoutItemSchema],
     shippingAddress: {
-        address: { type: String, required: true },
-        city: { type: String, required: true },
-        postalCode: { type: String, required: true },
-        country: { type: String, required: true }, 
+      address: { type: String, required: true },
+      city: { type: String, required: true },
+      postalCode: { type: String, required: true },
+      country: { type: String, required: true },
     },
     paymentMethod: {
-        type: String,
-        required: true,
-    },
-    totalPrice: {
-        type: Number,
-        required: true,
-        min: 0,
-    },
-    isPaid: {
-        type: Boolean,
-        default: false,
-    },
-    paidAt: {
-        type: Date,
+      type: String,
+      required: true,
     },
     paymentStatus: {
-        type: String,
-        default: "pending",
+      type: String,
+      enum: ['pending', 'paid', 'unpaid'],
+      default: 'pending',
     },
-    paymentDetails: {
-        type: mongoose.Schema.Types.Mixed, // store payment related details (transaction id, paypal response)
-        
+    totalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    isPaid: {
+      type: Boolean,
+      default: false,
+    },
+    paidAt: {
+      type: Date,
     },
     isFinalized: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     finalizedAt: {
-        type: Date,
+      type: Date,
     },
-},
-    {timestamps: true}
-);
+    bankTransferProof: {  // Add this new field
+        type: String,
+        default: null,
+      },
+  }, {timestamps: true});
+  
 
 module.exports = mongoose.model("Checkout", checkoutSchema);

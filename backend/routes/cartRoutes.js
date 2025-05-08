@@ -3,9 +3,42 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const { protect } = require("../middleware/authMiddleware");
 const User = require("../models/User");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const router = express.Router();
 
+// Configure multer for custom product image uploads
+const customImageStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const dir = path.join(__dirname, '../uploads/custom_products');
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      cb(null, 'custom-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+  
+  const uploadCustomImage = multer({
+    storage: customImageStorage,
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed.'));
+      }
+    },
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB file size limit
+    }
+  });
+  
 // Helper function to get a cart by user ID or guest ID
 const getCart = async (userId, guestId) => {
 
@@ -21,67 +54,86 @@ const getCart = async (userId, guestId) => {
 // @route POST /api/cart
 // @desc Add a product to the cart for a guest or logged-in user
 // @access Public
-router.post("/", async (req, res) => {
-    const { productId, quantity, size, color, guestId, userId } = req.body;
-
+router.post("/", uploadCustomImage.single('customImage'), async (req, res) => {
+    const { productId, quantity, size, color, description, guestId, userId } = req.body;
+  
     try {
-        const product = await Product.findById(productId);
-        if (!product) return res.status(404).json({ message: "Product not found" });
-
-        // Determine if the user is logged in or a guest
-        let cart = await getCart(userId, guestId);
-
-        // If the cart exists, update it
-        if (cart) {
-            const productIndex = cart.products.findIndex(
-                (p) => p.productId.toString() === productId && p.size === size && p.color === color
-            );
-
-            if (productIndex > -1) {
-                // If the product already exists, update the quantity
-                cart.products[productIndex].quantity += quantity;
-            } else {
-                // Add a new product
-                cart.products.push({
-                    productId,
-                    name: product.name,
-                    image: product.images[0], 
-                    price: product.price,
-                    size,
-                    color,
-                    quantity,
-                });
-            }
-
-            // Recalculate the total price
-            cart.totalPrice = cart.products.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-            await cart.save();
-            return res.status(200).json(cart);
+      const product = await Product.findById(productId);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+  
+      // Handle custom image upload
+      let customImageUrl = null;
+      if (product.category === "Custom" && req.file) {
+        customImageUrl = `/uploads/custom_products/${req.file.filename}`;
+      }
+  
+      // Ensure custom description is provided for custom category products
+      if (product.category === "Custom" && !description) {
+        return res.status(400).json({ message: "Description is required for custom products" });
+      }
+  
+      // Determine if the user is logged in or a guest
+      let cart = await getCart(userId, guestId);
+  
+      // If the cart exists, update it
+      if (cart) {
+        const productIndex = cart.products.findIndex(
+          (p) => p.productId.toString() === productId && p.size === size && p.color === color
+        );
+  
+        if (productIndex > -1) {
+          // If the product already exists, update the quantity and description
+          cart.products[productIndex].quantity += quantity;
+          cart.products[productIndex].description = description || cart.products[productIndex].description;
+          if (customImageUrl) {
+            cart.products[productIndex].customImage = customImageUrl;
+          }
         } else {
-            // Create a new cart for the guest or user
-            const newCart = await Cart.create({
-                user: userId ? userId : undefined,
-                guestId: guestId ? guestId : "guest_" + new Date().getTime(),
-                products: [
-                    {
-                        productId,
-                        name: product.name,
-                        image: product.images[0].url,
-                        price: product.price,
-                        size,
-                        color,
-                        quantity,
-                    },
-                ],
-                totalPrice: product.price * quantity,
-            });
-
-            return res.status(201).json(newCart);
+          // Add a new product with description if it's a custom product
+          cart.products.push({
+            productId,
+            name: product.name,
+            image: product.images[0]?.url || '',
+            price: product.price,
+            size,
+            color,
+            quantity,
+            description: description || "",
+            customImage: customImageUrl
+          });
         }
+  
+        // Recalculate the total price
+        cart.totalPrice = cart.products.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  
+        await cart.save();
+        return res.status(200).json(cart);
+      } else {
+        // Create a new cart for the guest or user
+        const newCart = await Cart.create({
+          user: userId ? userId : undefined,
+          guestId: guestId ? guestId : "guest_" + new Date().getTime(),
+          products: [
+            {
+              productId,
+              name: product.name,
+              image: product.images[0]?.url || '',
+              price: product.price,
+              size,
+              color,
+              quantity,
+              description: description || "",
+              customImage: customImageUrl
+            },
+          ],
+          totalPrice: product.price * quantity,
+        });
+  
+        return res.status(201).json(newCart);
+      }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
+      console.error(error);
+      res.status(500).json({ message: "Server Error" });
     }
 });
 

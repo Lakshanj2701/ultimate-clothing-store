@@ -74,29 +74,30 @@ router.put("/:id", protect, admin, upload.array("images", 5), async (req, res) =
     product.material = req.body.material || product.material;
     product.gender = req.body.gender || product.gender;
 
-    // Parse and update arrays 
-    if (req.body.sizes) {
-      product.sizes = Array.isArray(req.body.sizes) 
-        ? req.body.sizes 
-        : JSON.parse(req.body.sizes);
-    }
+    // Update arrays
+    const updateArrayField = (fieldName) => {
+      if (req.body[fieldName]) {
+        try {
+          const parsed = JSON.parse(req.body[fieldName]);
+          product[fieldName] = Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+          product[fieldName] = [req.body[fieldName]];
+        }
+      }
+    };
 
-    if (req.body.colors) {
-      product.colors = Array.isArray(req.body.colors) 
-        ? req.body.colors 
-        : JSON.parse(req.body.colors);
-    }
+    updateArrayField('sizes');
+    updateArrayField('colors');
+    updateArrayField('tags');
 
     // Handle image uploads
     if (req.files && req.files.length > 0) {
       const newImages = req.files.map(file => ({
         url: `/uploads/${file.filename}`
       }));
-      
+
       // Append new images or replace existing
-      product.images = req.body.replaceImages === 'true' 
-        ? newImages 
-        : [...product.images, ...newImages];
+      product.images = req.body.replaceImages === 'true' ? newImages : [...product.images, ...newImages];
     }
 
     const updatedProduct = await product.save();
@@ -106,6 +107,7 @@ router.put("/:id", protect, admin, upload.array("images", 5), async (req, res) =
     res.status(500).json({ message: "Failed to update product" });
   }
 });
+
 
 // @route   DELETE /api/admin/products/:id
 // @desc    Delete a product (Admin only)
