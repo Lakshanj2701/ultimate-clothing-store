@@ -149,6 +149,15 @@ const OrderDetailsPage = () => {
             </div>
           </div>
         </div>
+        {/* Add Return and Refund Buttons */}
+        <div className="flex justify-end mt-4 space-x-4">
+          <button
+            onClick={() => setModalOpen(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Request Return
+          </button>
+        </div>
 
         {orderDetails.status === 'Delivered' && (
           <button
