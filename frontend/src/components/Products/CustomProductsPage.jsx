@@ -35,6 +35,7 @@ const CustomProductsPage = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-4">Custom Products</h1>
+      <p className="text-gray-600 mb-6">Bring Your Ideas To Life</p>
       {loading ? (
         <div className="text-center py-8">Loading custom products...</div>
       ) : (
