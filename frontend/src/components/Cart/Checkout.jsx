@@ -25,10 +25,20 @@ const Checkout = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    if (!cart || !cart.products || cart.products.length === 0) {
-      navigate('/');
+    // Check if user is authenticated
+    if (!user) {
+      localStorage.setItem('checkoutIntent', 'true');
+      navigate('/login');
+      return;
     }
-  }, [cart, navigate]);
+
+    // Check if cart is empty
+    if (!cart || !cart.products || cart.products.length === 0) {
+      toast.error('Your cart is empty!');
+      navigate('/');
+      return;
+    }
+  }, [cart, navigate, user]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];

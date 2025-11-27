@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import register from "../assets/register.webp";
 import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from 'sonner';
+import { useCart } from '../components/Cart/CartContext';
+import api from '../services/api';
 
 const Register = () => {
     const [name, setName] = useState("")
@@ -9,40 +12,67 @@ const Register = () => {
     const [password, setPassword] =useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
-    
+    const { mergeCarts } = useCart();
     const navigate = useNavigate();
 
 const handleSubmit = async(e) => {
     e.preventDefault();
-    console.log("User Registered:", {name, email, password })
+    setError("");
+    setIsLoading(true);
     
     try {
-        console.log("hirrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
         const response = await axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/users/register`, 
             { name, email, password }
         );
         
-      
-        if(response.status === 201){
-            console.log(response)
-            navigate('/login');
-            alert("success")
+        if(response.status === 201 || response.status === 200){
+            const { user, token } = response.data;
+            
+                // Store token and user data (auto-login after registration)
+                if (token && user) {
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    // Set authorization header for API calls
+                    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    
+                    // Dispatch custom event to notify AuthContext of state change
+                    window.dispatchEvent(new Event('authStateChange'));
+                    
+                    // Merge guest cart with user cart after registration
+                const guestId = localStorage.getItem('guestId');
+                if (guestId) {
+                    await mergeCarts(guestId);
+                }
+                
+                toast.success(`Welcome, ${user.name}! Account created successfully.`);
+                
+                // Check if user intended to checkout
+                const checkoutIntent = localStorage.getItem('checkoutIntent');
+                localStorage.removeItem('checkoutIntent');
+                
+                // Redirect to checkout if that was the intent, otherwise to home
+                if (checkoutIntent === 'true') {
+                    navigate('/checkout');
+                } else {
+                    navigate('/');
+                }
+            } else {
+                // If no token, redirect to login (preserve checkout intent)
+                toast.success('Registration successful! Please login.');
+                navigate('/login');
+            }
         }
-     
-       
-        
     } catch (error) {
         setError(
             error.response?.data?.message || 
-            "Login failed. Please check your credentials."
-       
+            "Registration failed. Please try again."
         );
-        alert("User already exists")
+        toast.error(error.response?.data?.message || "Registration failed. User may already exist.");
     } finally {
         setIsLoading(false);
     }
-
 }
 
 
@@ -56,6 +86,13 @@ const handleSubmit = async(e) => {
                 <h2 className="text-2xl font-bold text-center mb-6">Hey There!</h2>
                 <p className="text-center mb-6">Enter your Details and Register
                 </p>
+                
+                {error && (
+                    <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                        {error}
+                    </div>
+                )}
+                
                 <div className="mb-4">
                     <label className="block text-sm font-semibold mb-2">Name</label>
                     <input type="name" value={name} onChange={(e) => setName(e.target.value)}

@@ -9,39 +9,57 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
+  const syncAuthFromStorage = async () => {
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
 
-      console.log('Initializing Auth...');
-      console.log('Stored Token:', storedToken);
-      console.log('Stored User:', storedUser);
+    if (storedToken && storedUser) {
+      try {
+        api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        // Try to fetch the profile using the stored token
+        const response = await api.get('/api/users/profile');
+        
+        // If the request succeeds, update the user state
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
 
-      if (storedToken && storedUser) {
-        try {
-          api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-          // Try to fetch the profile using the stored token
-          const response = await api.get('/api/users/profile');
-          
-          // If the request succeeds, update the user state
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-
-          console.log('Authenticated User:', response.data);
-        } catch (error) {
-          console.error('Error fetching profile:', error);
-          setUser(null);
-          setToken(null);
-        }
-      } else {
+        console.log('Authenticated User:', response.data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
         setUser(null);
         setToken(null);
       }
+    } else {
+      setUser(null);
+      setToken(null);
+    }
+  };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      console.log('Initializing Auth...');
+      await syncAuthFromStorage();
       setIsLoading(false);
     };
 
     initializeAuth();
+
+    // Listen for storage changes (when login happens in another tab or component)
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' || e.key === 'user') {
+        syncAuthFromStorage();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also listen for custom events (for same-tab updates)
+    window.addEventListener('authStateChange', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authStateChange', handleStorageChange);
+    };
   }, []);
 
   const logout = () => {

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useAuth } from '../../Context/AuthContext';
 
 const CartContext = createContext();
 
@@ -8,8 +9,7 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const user = JSON.parse(localStorage.getItem('user'));
+  const { user } = useAuth();
 
   const fetchCart = async () => {
     try {
@@ -188,8 +188,10 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Update cart when user changes (login/logout) or on mount
   useEffect(() => {
     fetchCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?._id]);
 
   return (
