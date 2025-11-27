@@ -3,6 +3,32 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useCart } from '../components/Cart/CartContext';
 import { toast } from 'sonner';
+import { getFullImageUrl } from '../utils/imageHelpers';
+
+const resolveItemImage = (image) => {
+  try {
+    let data = image;
+
+    if (typeof data === 'string') {
+      const trimmed = data.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        data = JSON.parse(trimmed);
+      } else {
+        return getFullImageUrl(trimmed);
+      }
+    }
+
+    if (data && typeof data === 'object') {
+      const extracted = data.url || data.path || data.src;
+      return getFullImageUrl(extracted);
+    }
+
+    return getFullImageUrl(data);
+  } catch (error) {
+    console.error('Failed to resolve order item image:', image, error);
+    return '/placeholder-image.jpg';
+  }
+};
 
 const OrderConfirmationPage = () => {
   const { orderId } = useParams();
@@ -221,9 +247,12 @@ const OrderConfirmationPage = () => {
                 <div className="flex">
                   {item.image && (
                     <img 
-                      src={item.image} 
+                      src={resolveItemImage(item.image)}
                       alt={item.name} 
                       className="w-16 h-16 object-cover rounded mr-4"
+                      onError={(event) => {
+                        event.currentTarget.src = '/placeholder-image.jpg';
+                      }}
                     />
                   )}
                   <div>
