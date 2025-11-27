@@ -167,22 +167,31 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     try {
       setLoading(true);
+      const payload = {};
+      
       if (user) {
-        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/cart`, {
-          data: { userId: user._id }
-        });
+        payload.userId = user._id;
       } else {
         const guestId = localStorage.getItem('guestId');
-        if (guestId) {
-          await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/cart`, {
-            data: { guestId }
-          });
+        if (!guestId) {
+          setCart(null);
+          return; // No cart to clear
         }
+        payload.guestId = guestId;
       }
-      setCart(null);
+
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/cart/clear`, {
+        data: payload
+      });
+      
+      setCart(response.data);
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Failed to clear cart';
-      toast.error(errorMsg);
+      // Don't show error toast if cart is already empty
+      if (err.response?.status !== 404) {
+        toast.error(errorMsg);
+      }
+      setCart(null);
     } finally {
       setLoading(false);
     }
