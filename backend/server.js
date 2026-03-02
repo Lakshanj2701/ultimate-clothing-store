@@ -26,9 +26,21 @@ const app = express();
 
 dotenv.config();
 app.use(express.json());
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL, // set this to your Vercel URL in production
+].filter(Boolean);
+
 app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: (origin, callback) => {
+    // allow requests with no origin (e.g. mobile apps, curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
 }));
 
