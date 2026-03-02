@@ -8,7 +8,7 @@ import api from '../../services/api';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cart, removeFromCart } = useCart();
+  const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const [checkoutId, setCheckoutId] = useState(null);
   const [shippingAddress, setShippingAddress] = useState({
@@ -25,10 +25,20 @@ const Checkout = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    if (!cart || !cart.products || cart.products.length === 0) {
-      navigate('/');
+    // Check if user is authenticated
+    if (!user) {
+      localStorage.setItem('checkoutIntent', 'true');
+      navigate('/login');
+      return;
     }
-  }, [cart, navigate]);
+
+    // Check if cart is empty
+    if (!cart || !cart.products || cart.products.length === 0) {
+      toast.error('Your cart is empty!');
+      navigate('/');
+      return;
+    }
+  }, [cart, navigate, user]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -93,15 +103,23 @@ const Checkout = () => {
         },
       });
 
-      if (response && response.data && response.data._id) {
-        setCheckoutId(response.data._id);
+      // The API interceptor returns response.data, but POST route wraps in { data: {...} }
+      // So response is { data: { _id: ..., ... } }
+      const checkoutData = response?.data || response;
+      const checkoutId = checkoutData?._id;
+      
+      if (checkoutId) {
+        setCheckoutId(checkoutId);
         toast.success('Checkout created!');
         
         if (paymentMethod === 'BankTransfer') {
           toast.info('Your order will be processed after payment verification');
         }
         
-        navigate(`/order-confirmation/${response.data._id}`);
+        // Add a small delay to ensure checkout is persisted in database before navigation
+        setTimeout(() => {
+          navigate(`/order-confirmation/${checkoutId}`);
+        }, 800);
       } else {
         toast.error('Checkout creation failed: No checkout ID received.');
       }
@@ -122,12 +140,23 @@ const Checkout = () => {
 
       const orderResponse = await api.post(`/api/checkout/${checkoutId}/finalize`);
 
-      await removeFromCart();
-      toast.success('Order placed successfully!');
-      navigate(`/order-confirmation/${orderResponse.data._id}`);
+      if (orderResponse && orderResponse._id) {
+        // Clear the cart after successful order placement
+        await clearCart();
+        toast.success('Order placed successfully!');
+        // Add a small delay to ensure order is persisted in database before navigation
+        setTimeout(() => {
+          navigate(`/order-confirmation/${orderResponse._id}`);
+        }, 800);
+      } else {
+        throw new Error('Invalid order response');
+      }
     } catch (error) {
-      toast.error('Payment failed or order placement failed!');
-      console.error(error);
+      // Only show error if there's an actual error
+      if (error.response?.status >= 400 || error.message) {
+        toast.error(error.response?.data?.message || 'Payment failed or order placement failed!');
+        console.error('Payment/Order error:', error);
+      }
     }
   };
 
@@ -367,7 +396,10 @@ const Checkout = () => {
                     <PayPalButton
                       amount={cart.totalPrice}
                       onSuccess={handlePaymentSuccess}
-                      onError={(err) => alert('Payment failed. Try again.')}
+                      onError={(err) => {
+                        console.error('PayPal payment error:', err);
+                        toast.error('Payment failed. Please try again.');
+                      }}
                     />
                   </>
                 )}

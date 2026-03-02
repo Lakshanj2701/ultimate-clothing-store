@@ -9,15 +9,15 @@ const Topbar = () => {
     <div className="bg-[#ea2e0e] text-white">
         <div className="container mx-auto flex justify-between items-center py-3 px-4">
             <div className="hidden md:flex items-center spacce-x-4">
-                <a href="#" className="hover:text-gray-300">
+                <a href="https://www.facebook.com" target="_blank" className="hover:text-gray-300">
                     <TbBrandMeta className="h-5 w-5"/>
                 </a>    
            
-                <a href="#" className="hover:text-gray-300">
+                <a href="https://www.instagram.com" target="_blank" className="hover:text-gray-300">
                     <IoLogoInstagram className="h-5 w-5"/>
                 </a>    
            
-                <a href="#" className="hover:text-gray-300">
+                <a href="https://www.twitter.com" target="_blank" className="hover:text-gray-300">
                     <RiTwitterXLine className="h-4 w-4"/>
                 </a>    
 
@@ -26,8 +26,8 @@ const Topbar = () => {
                 <span>We ship Worldwide - Fast and reliable shipping!</span>
             </div>
             <div className="text-sm hidden md:block">
-                <a href="tel:+94763551659" className="hover:text-gray-300">
-                    +94763551659
+                <a href="tel:+941123456789" className="hover:text-gray-300">
+                    +94 112 345 6789
                 </a>
             </div>    
         </div >    

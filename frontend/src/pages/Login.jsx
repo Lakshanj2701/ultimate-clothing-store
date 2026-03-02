@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import login from "../assets/login.webp";
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useCart } from '../components/Cart/CartContext';
+import api from '../services/api';
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { mergeCarts } = useCart();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -30,6 +32,12 @@ const Login = () => {
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
             
+            // Set authorization header for API calls
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            
+            // Dispatch custom event to notify AuthContext of state change
+            window.dispatchEvent(new Event('authStateChange'));
+            
             // Merge guest cart with user cart after login
             const guestId = localStorage.getItem('guestId');
             if (guestId) {
@@ -39,11 +47,20 @@ const Login = () => {
             // Show success message
             toast.success(`Welcome back, ${user.name}!`);
             
-            // Redirect based on role
+            // Check if user intended to checkout
+            const checkoutIntent = localStorage.getItem('checkoutIntent');
+            localStorage.removeItem('checkoutIntent');
+            
+            // Redirect based on role and intent
             if (user.role === 'admin') {
                 navigate('/admin');
+            } else if (checkoutIntent === 'true') {
+                // Redirect to checkout if that was the intent
+                navigate('/checkout');
             } else {
-                navigate('/');
+                // Otherwise redirect to home or from location
+                const from = location.state?.from?.pathname || '/';
+                navigate(from);
             }
             
         } catch (error) {

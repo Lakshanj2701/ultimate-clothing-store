@@ -13,7 +13,9 @@ const CartDrawer = ({ drawerOpen, toggleCartDrawer }) => {
 
   const handleCheckout = () => {
     if (!user) {
-      // If user is not logged in, redirect to login page
+      // If user is not logged in, save checkout intent and redirect to login page
+      localStorage.setItem('checkoutIntent', 'true');
+      toggleCartDrawer(); // Close the drawer
       navigate('/login');
     } else {
       // If user is logged in, proceed to checkout page

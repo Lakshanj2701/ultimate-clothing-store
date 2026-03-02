@@ -51,7 +51,7 @@ connectDB();
 
 // API Routes
 app.get("/", (req, res) => {
-    res.send("WELCOME TO RABBIT API!");
+    res.send("WELCOME TO ULTIMATE-CLOTHING-STORE API!");
 });
 
 app.use("/api/users", userRoutes);

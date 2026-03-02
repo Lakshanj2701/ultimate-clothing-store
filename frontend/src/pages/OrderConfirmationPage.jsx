@@ -1,6 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useCart } from '../components/Cart/CartContext';
+import { toast } from 'sonner';
+import { getFullImageUrl } from '../utils/imageHelpers';
+
+const resolveItemImage = (image) => {
+  try {
+    let data = image;
+
+    if (typeof data === 'string') {
+      const trimmed = data.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        data = JSON.parse(trimmed);
+      } else {
+        return getFullImageUrl(trimmed);
+      }
+    }
+
+    if (data && typeof data === 'object') {
+      const extracted = data.url || data.path || data.src;
+      return getFullImageUrl(extracted);
+    }
+
+    return getFullImageUrl(data);
+  } catch (error) {
+    console.error('Failed to resolve order item image:', image, error);
+    return '/placeholder-image.jpg';
+  }
+};
 
 const OrderConfirmationPage = () => {
   const { orderId } = useParams();
@@ -9,11 +37,24 @@ const OrderConfirmationPage = () => {
   const [error, setError] = useState(null);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const navigate = useNavigate();
+  const { clearCart } = useCart();
 
   useEffect(() => {
-    const fetchCheckoutDetails = async () => {
+    // Don't fetch if we're currently finalizing - this prevents errors during finalization
+    if (isFinalizing) {
+      return;
+    }
+
+    const fetchCheckoutDetails = async (retryCount = 0) => {
+      // Double check - don't fetch if finalizing started during async operation
+      if (isFinalizing) {
+        return;
+      }
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second
+
       try {
-        console.log(`Fetching checkout ${orderId}...`);
+        console.log(`Fetching checkout ${orderId}... (attempt ${retryCount + 1})`);
         const response = await api.get(`/api/checkout/${orderId}`);
         console.log('API Response:', response);
 
@@ -23,48 +64,90 @@ const OrderConfirmationPage = () => {
 
         setCheckout(response);
         setError(null);
+        setLoading(false);
       } catch (error) {
         console.error('Fetch error:', error);
-        const errorMessage = error.response?.data?.message || 
-                           error.message || 
-                           'Failed to load order details';
-        setError(errorMessage);
-        setCheckout(null);
-      } finally {
-        setLoading(false);
+        
+        // Check if it's a 404 (not found) - might be a timing issue, retry
+        if (error.response?.status === 404 && retryCount < maxRetries) {
+          console.log(`Checkout not found yet, retrying in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`);
+          setTimeout(() => {
+            fetchCheckoutDetails(retryCount + 1);
+          }, retryDelay);
+          return; // Don't set loading to false yet
+        }
+        
+        // Only set error if we've exhausted retries or it's a different error
+        if (error.response?.status && error.response.status >= 400) {
+          const errorMessage = error.response?.data?.message || 
+                             error.message || 
+                             'Failed to load order details';
+          // Don't show error if we're finalizing or already have checkout data
+          if (!isFinalizing && !checkout) {
+            setError(errorMessage);
+            setCheckout(null);
+            setLoading(false);
+          }
+        } else if (!error.response) {
+          // Network error or other non-HTTP error
+          if (retryCount < maxRetries) {
+            console.log(`Network error, retrying in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`);
+            setTimeout(() => {
+              fetchCheckoutDetails(retryCount + 1);
+            }, retryDelay);
+            return; // Don't set loading to false yet
+          }
+          // Don't show error if we're finalizing or already have checkout data
+          if (!isFinalizing && !checkout) {
+            setError('Failed to load order details. Please check your connection.');
+            setCheckout(null);
+            setLoading(false);
+          }
+        }
+        
+        // Only set loading to false if we're not retrying, not finalizing, and don't have checkout
+        if ((retryCount >= maxRetries || (error.response?.status && error.response.status !== 404)) && !isFinalizing && !checkout) {
+          setLoading(false);
+        }
       }
     };
 
     fetchCheckoutDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   const handleFinalizeOrder = async () => {
     setIsFinalizing(true);
+    setError(null); // Clear any previous errors
     try {
-      const { data } = await api.post(`/api/checkout/${orderId}/finalize`);
-      console.log('Finalization response:', data);
+      // API interceptor already extracts response.data, so response IS the data
+      const orderResponse = await api.post(`/api/checkout/${orderId}/finalize`);
+      console.log('Finalization response:', orderResponse);
       
-      if (data?._id) {
-        // Show success message before navigating
+      if (orderResponse && orderResponse._id) {
+        // Clear the cart after successful order finalization
+        await clearCart();
+        
+        // Mark the checkout as finalized so the page shows the confirmation state
         setCheckout(prev => ({ ...prev, isFinalized: true }));
         
-        // Add a slight delay for better UX
-        setTimeout(() => {
-          navigate('/profile', {
-            state: { 
-              orderSuccess: true,
-              orderId: data._id 
-            }
-          });
-        }, 1500);
+        // Show success toast and keep the user on this page
+        toast.success('Order confirmed successfully!');
       } else {
         throw new Error('Invalid response after finalizing');
       }
     } catch (error) {
       console.error('Finalization error:', error);
-      setError(error.response?.data?.message || error.message || 'Failed to finalize order');
-    } finally {
       setIsFinalizing(false);
+      // Only set error if there's an actual error response
+      if (error.response?.status >= 400) {
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to finalize order';
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } else {
+        setError('Failed to finalize order. Please try again.');
+        toast.error('Failed to finalize order. Please try again.');
+      }
     }
   };
 
@@ -164,9 +247,12 @@ const OrderConfirmationPage = () => {
                 <div className="flex">
                   {item.image && (
                     <img 
-                      src={item.image} 
+                      src={resolveItemImage(item.image)}
                       alt={item.name} 
                       className="w-16 h-16 object-cover rounded mr-4"
+                      onError={(event) => {
+                        event.currentTarget.src = '/placeholder-image.jpg';
+                      }}
                     />
                   )}
                   <div>
